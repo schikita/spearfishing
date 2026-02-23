@@ -1,0 +1,56 @@
+.wrap h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.intro {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.region {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.card p {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.link {
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+.contact {
+  margin-top: 0.25rem;
+}
+
+.loading,
+.empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
