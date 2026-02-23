@@ -2,9 +2,5 @@
   "framework": null,
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/[...path].ts": { "runtime": "nodejs20.x" },
-    "api/test.ts": { "runtime": "nodejs20.x" }
-  }
+  "outputDirectory": "frontend/dist"
 }
