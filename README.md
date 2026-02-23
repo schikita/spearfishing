@@ -52,6 +52,23 @@ cd frontend && npm run dev
 
 Фронт: http://localhost:5173, API: http://localhost:3000.
 
+## Деплой: фронт на Vercel + бэкенд на Railway
+
+Если фронт уже на Vercel (например `spearfishing-coral.vercel.app`), а запросы к `/api/*` дают 404:
+
+1. **Разверните бэкенд на Railway**  
+   - Зайдите на [railway.app](https://railway.app), New Project → Deploy from GitHub → выберите репозиторий.  
+   - В настройках сервиса задайте: **Root Directory** — `backend` (только бэкенд), **Build Command** — `npm install && npm run build`, **Start Command** — `node dist/index.js`.  
+   - В **Variables** добавьте `JWT_SECRET` (обязательно), при необходимости `ADMIN_EMAIL` и `ADMIN_PASSWORD`.  
+   - Сохраните и дождитесь деплоя. В разделе **Settings** → **Networking** включите **Generate Domain** и скопируйте URL (например `https://spearfishing-production.up.railway.app`).
+
+2. **Укажите этот URL во фронте на Vercel**  
+   - Vercel → ваш проект → **Settings** → **Environment Variables**.  
+   - Добавьте переменную: **Name** — `VITE_API_URL`, **Value** — `https://ваш-бэкенд.up.railway.app` (без слэша в конце).  
+   - Сохраните и сделайте **Redeploy** (Deployments → … → Redeploy). Переменные Vite подставляются при сборке, поэтому без редеплоя 404 не исчезнет.
+
+После редеплоя фронт будет ходить за данными на бэкенд с Railway, 404 по `/api/*` пропадут.
+
 ## Развёртывание на сервере (не Vercel)
 
 Сервис — один Node-сервер с статикой и API, без serverless. Варианты:
