@@ -1,6 +1,9 @@
 {
   "name": "spearfishing-by",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "postinstall": "cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
