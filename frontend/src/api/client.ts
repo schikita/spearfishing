@@ -17,7 +17,13 @@ export async function request<T>(
   if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   const res = await fetch(API + path, { ...options, headers });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || res.statusText || 'Ошибка запроса');
+  if (!res.ok) {
+    const msg =
+      res.status === 404
+        ? 'Сервер API недоступен (404). Разверните бэкенд (например на Railway) и в настройках Vercel задайте переменную VITE_API_URL, затем пересоберите проект.'
+        : (data.error || res.statusText || 'Ошибка запроса');
+    throw new Error(msg);
+  }
   return data as T;
 }
 
