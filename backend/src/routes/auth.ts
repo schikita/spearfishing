@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { db } from '../db/index.js';
-import { users } from '../db/schema.js';
+import { db, users } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 import { createToken, getClientIp, requireAuth, requireAdmin } from '../middleware/auth.js';
 

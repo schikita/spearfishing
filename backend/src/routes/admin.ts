@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { db } from '../db/index.js';
-import { users, waterBodies, referenceSections, permitOrganizations } from '../db/schema.js';
+import { db, users, waterBodies, referenceSections, permitOrganizations } from '../db/index.js';
 import { eq, asc } from 'drizzle-orm';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 

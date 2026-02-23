@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { db } from '../db/index.js';
-import { waterBodies, referenceSections, permitOrganizations } from '../db/schema.js';
+import { db, waterBodies, referenceSections, permitOrganizations } from '../db/index.js';
 import { asc, eq } from 'drizzle-orm';
 
 const router = Router();

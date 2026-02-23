@@ -1,11 +1,11 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from './schema.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const mod = process.env.POSTGRES_URL
+  ? await import('./postgres.js')
+  : await import('./sqlite.js');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = process.env.SQLITE_PATH || path.join(__dirname, '../../data/spearfishing.db');
-
-export const sqlite = new Database(dbPath);
-export const db = drizzle(sqlite, { schema });
+export const db = mod.db;
+export const initDb = mod.initDb;
+export const users = mod.users;
+export const waterBodies = mod.waterBodies;
+export const referenceSections = mod.referenceSections;
+export const permitOrganizations = mod.permitOrganizations;
+export type User = typeof users.$inferSelect;

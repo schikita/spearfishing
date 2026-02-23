@@ -2,12 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDb } from './db/init.js';
+import { initDb } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import publicRoutes from './routes/public.js';
 import adminRoutes from './routes/admin.js';
-
-initDb();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,6 +24,11 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(staticDir, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log('Server on http://localhost:' + PORT);
-});
+export { app };
+
+export const ready = (async () => {
+  await Promise.resolve(initDb());
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => console.log('Server on http://localhost:' + PORT));
+  }
+})();

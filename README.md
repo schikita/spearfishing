@@ -52,6 +52,21 @@ cd frontend && npm run dev
 
 Фронт: http://localhost:5173, API: http://localhost:3000.
 
+## Деплой на Vercel (всё в одном проекте)
+
+Чтобы приложение само поднялось при деплое на Vercel (фронт + API):
+
+1. **Подключите базу Postgres в Vercel**  
+   В проекте на [vercel.com](https://vercel.com): **Storage** → **Create Database** → **Postgres** → создайте БД и подключите к проекту. В проект автоматически добавятся переменные `POSTGRES_URL` и др.
+
+2. **Деплой**  
+   Сделайте push в репозиторий или **Redeploy** в Vercel. Сборка запустит бэкенд и фронт; API будет доступен по `/api/*`, статика — с корня.
+
+3. **Первый вход**  
+   Логин: `admin@spearfishing.by`, пароль: `admin123` (или значения из переменных `ADMIN_EMAIL` и `ADMIN_PASSWORD`).
+
+Без подключённого Postgres запросы к `/api/*` будут падать с ошибкой. Локально и в Docker по-прежнему используется SQLite (переменная `POSTGRES_URL` не задаётся).
+
 ## Деплой: фронт на Vercel + бэкенд на Railway
 
 Если фронт уже на Vercel (например `spearfishing-coral.vercel.app`), а запросы к `/api/*` дают 404:
