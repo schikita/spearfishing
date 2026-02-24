@@ -29,6 +29,7 @@ export function initDb(): void {
       description TEXT,
       lat TEXT NOT NULL,
       lng TEXT NOT NULL,
+      geometry TEXT,
       permit_info TEXT,
       order_index INTEGER DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -58,6 +59,11 @@ export function initDb(): void {
     CREATE INDEX IF NOT EXISTS idx_water_bodies_region ON water_bodies(region);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
   `);
+  try {
+    db.exec('ALTER TABLE water_bodies ADD COLUMN geometry TEXT');
+  } catch {
+    /* column already exists */
+  }
 
   const adminCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
   if (adminCount.c === 0) {

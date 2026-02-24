@@ -28,6 +28,7 @@ export async function initDb(): Promise<void> {
         description TEXT,
         lat TEXT NOT NULL,
         lng TEXT NOT NULL,
+        geometry TEXT,
         permit_info TEXT,
         order_index INTEGER DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT now()::text

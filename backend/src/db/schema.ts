@@ -17,6 +17,7 @@ export const waterBodies = sqliteTable('water_bodies', {
   description: text('description'),
   lat: text('lat').notNull(),
   lng: text('lng').notNull(),
+  geometry: text('geometry'), // GeoJSON geometry (Polygon, LineString, Point) для отображения контуров
   permitInfo: text('permit_info'),
   orderIndex: integer('order_index').default(0),
   createdAt: text('created_at').notNull().default('CURRENT_TIMESTAMP'),
