@@ -1,8 +1,43 @@
-import { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
+import { useEffect, useState, useCallback, Fragment } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import { api, WaterBody } from '../api/client';
 import styles from './MapPage.module.css';
+
+// GeoJSON coordinates [lng, lat] → Leaflet [lat, lng]
+function toLeafletPositions(geom: { type: string; coordinates: unknown }): [number, number][] | null {
+  if (!geom?.coordinates) return null;
+  const c = geom.coordinates;
+  if (geom.type === 'Point') {
+    if (Array.isArray(c) && c.length >= 2 && typeof c[0] === 'number') return [[c[1] as number, c[0] as number]];
+    if (Array.isArray(c) && c[0] && Array.isArray(c[0]) && c[0].length >= 2) {
+      return (c as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
+    }
+  }
+  if (geom.type === 'LineString' && Array.isArray(c)) {
+    return (c as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
+  }
+  if (geom.type === 'Polygon' && Array.isArray(c) && c[0]?.length) {
+    return (c[0] as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
+  }
+  return null;
+}
+
+const isValidPos = (p: [number, number]) => Number.isFinite(p[0]) && Number.isFinite(p[1]);
+const isValidRing = (r: [number, number][]) => r.length >= 2 && r.every(isValidPos);
+
+function toLeafletMultiPolygon(geom: { type: string; coordinates: unknown }): [number, number][][] | null {
+  if (geom?.type !== 'MultiPolygon' || !Array.isArray(geom.coordinates)) return null;
+  const c = geom.coordinates;
+  const toRing = (ring: number[][]) => ring.map((pos) => [pos[1], pos[0]] as [number, number]);
+  if (c.length && typeof c[0][0] === 'number') {
+    return [toRing(c as number[][])];
+  }
+  return (c as (number[][] | number[][][])[]).map((poly) => {
+    const ring: number[][] = typeof poly[0]?.[0] === 'number' ? (poly as number[][]) : (poly[0] as number[][]);
+    return toRing(ring);
+  });
+}
 
 const BELARUS_CENTER: [number, number] = [53.9, 27.5];
 const DEFAULT_ZOOM = 6;
@@ -91,8 +126,9 @@ export default function MapPage() {
     setRouteCoords([]);
   }, []);
 
-  const fitPoints = userPos && selectedWater
-    ? [userPos, [parseFloat(selectedWater.lat), parseFloat(selectedWater.lng)] as [number, number]]
+  const toPoint = selectedWater ? [parseFloat(selectedWater.lat), parseFloat(selectedWater.lng)] as [number, number] : null;
+  const fitPoints = userPos && toPoint && Number.isFinite(toPoint[0]) && Number.isFinite(toPoint[1])
+    ? [userPos, toPoint]
     : [];
 
   return (
@@ -125,15 +161,14 @@ export default function MapPage() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {waterBodies.map((wb) => (
-            <Marker
-              key={wb.id}
-              position={[parseFloat(wb.lat), parseFloat(wb.lng)]}
-              icon={waterIcon}
-              eventHandlers={{
-                click: () => buildRoute(wb),
-              }}
-            >
+          {waterBodies.map((wb) => {
+            const geom = wb.geometry ? (() => { try { return JSON.parse(wb.geometry!); } catch { return null; } })() : null;
+            const positions = geom ? toLeafletPositions(geom) : null;
+            const lat = parseFloat(wb.lat);
+            const lng = parseFloat(wb.lng);
+            const center: [number, number] = [lat, lng];
+            const centerValid = Number.isFinite(lat) && Number.isFinite(lng);
+            const popup = (
               <Popup>
                 <strong>{wb.nameRu || wb.name}</strong>
                 <br />
@@ -144,8 +179,60 @@ export default function MapPage() {
                   Построить маршрут сюда
                 </button>
               </Popup>
-            </Marker>
-          ))}
+            );
+            const multiPositions = geom ? toLeafletMultiPolygon(geom) : null;
+            if (geom?.type === 'MultiPolygon' && multiPositions?.length && multiPositions.every(isValidRing)) {
+              return (
+                <Fragment key={wb.id}>
+                  {multiPositions.map((positions, i) => (
+                    <Polygon
+                      key={`${wb.id}-${i}`}
+                      positions={positions}
+                      pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
+                      eventHandlers={{ click: () => buildRoute(wb) }}
+                    >
+                      {i === 0 ? popup : null}
+                    </Polygon>
+                  ))}
+                </Fragment>
+              );
+            }
+            if ((geom?.type === 'Polygon' || geom?.type === 'Point') && positions && positions.length >= 3 && isValidRing(positions)) {
+              return (
+                <Polygon
+                  key={wb.id}
+                  positions={positions}
+                  pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
+                  eventHandlers={{ click: () => buildRoute(wb) }}
+                >
+                  {popup}
+                </Polygon>
+              );
+            }
+            if (geom?.type === 'LineString' && positions && positions.length >= 2 && isValidRing(positions)) {
+              return (
+                <Polyline
+                  key={wb.id}
+                  positions={positions}
+                  pathOptions={{ color: '#2563eb', weight: 3 }}
+                  eventHandlers={{ click: () => buildRoute(wb) }}
+                >
+                  {popup}
+                </Polyline>
+              );
+            }
+            if (!centerValid) return null;
+            return (
+              <Marker
+                key={wb.id}
+                position={center}
+                icon={waterIcon}
+                eventHandlers={{ click: () => buildRoute(wb) }}
+              >
+                {popup}
+              </Marker>
+            );
+          })}
           {userPos && <Marker position={userPos} icon={userIcon} />}
           {routeCoords.length > 0 && (
             <Polyline positions={routeCoords} color="#3fb950" weight={4} opacity={0.9} />

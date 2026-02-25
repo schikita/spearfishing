@@ -16,41 +16,86 @@
 - Frontend: React, Vite, TypeScript, React Router, Leaflet.
 - Развёртывание: Docker.
 
-## Запуск через Docker (рекомендуется)
+## Локальный запуск (два терминала)
+
+Сейчас проект настроен на запуск **локально**: бэкенд и фронтенд в двух отдельных терминалах.
+
+**1. Установка зависимостей (один раз)**
 
 ```bash
-# Сборка и запуск
-docker-compose up -d --build
-
-# Сервис: http://localhost:3000
-# Первый вход: admin@spearfishing.by / admin123 (смените пароль и задайте JWT_SECRET в .env)
-```
-
-Переменные окружения (в `.env` или в `docker-compose`):
-
-- `JWT_SECRET` — секрет для JWT (обязательно смените в продакшене).
-- `ADMIN_EMAIL`, `ADMIN_PASSWORD` — логин/пароль первого админа (при первом запуске).
-
-Данные SQLite хранятся в volume `app-data`. При первом запуске таблицы и начальные данные (админ, справочник, организации БООР) создаются автоматически.
-
-**Важно:** если сервис стоит за Nginx или другим прокси, передавайте реальный IP клиента в заголовке `X-Forwarded-For`, иначе привязка «один доступ — один IP» будет работать по IP прокси.
-
-## Локальная разработка
-
-```bash
-# Корень проекта
+# из корня проекта
 npm install
-cd backend && npm install && npm run build && node dist/db/migrate.js && node dist/db/seed.js
-cd ../frontend && npm install
-
-# В двух терминалах:
-# 1) backend
-cd backend && npm run dev
-# 2) frontend (прокси /api -> localhost:3000)
-cd frontend && npm run dev
 ```
 
-Фронт: http://localhost:5173, API: http://localhost:3000.
+(Устанавливаются зависимости корня, `backend` и `frontend` за счёт `postinstall`.)
+
+Если установка падает при сборке **better-sqlite3** с ошибкой `SELF_SIGNED_CERT_IN_CHAIN` (корпоративный прокси/сертификат), перед установкой временно отключите проверку SSL и повторите:
+
+```powershell
+# PowerShell (только на время установки)
+$env:NODE_TLS_REJECT_UNAUTHORIZED=0
+npm install
+```
+
+После установки можно снова не задавать переменную (или поставить `1`). Для постоянной работы за прокси лучше настроить корпоративный CA в системе или в npm.
+
+**2. Переменные для бэкенда**
+
+В папке `backend` создайте файл `.env` (можно скопировать из корневого `.env.example`):
+
+```bash
+# backend/.env
+PORT=3000
+JWT_SECRET=change-me-min-32-chars
+SQLITE_PATH=./data/spearfishing.db
+ADMIN_EMAIL=admin@spearfishing.by
+ADMIN_PASSWORD=admin123
+```
+
+**3. (Опционально) Загрузка водоёмов из GeoJSON**
+
+В корне проекта лежат файлы **`brest_waterbodies.geojson`** и **`minsk_waterbodies.geojson`**. Чтобы подставить их в БД:
+
+```bash
+cd backend
+npm run db:seed-waterbodies
+```
+
+Скрипт очищает таблицу водоёмов и заполняет её из GeoJSON. По умолчанию загружаются `brest_waterbodies.geojson` и `minsk_waterbodies.geojson`. Иначе задайте `WATERBODIES_GEOJSON=/путь/1.geojson,/путь/2.geojson`.
+
+**4. Два терминала**
+
+**Терминал 1 — бэкенд:**
+
+```bash
+cd backend
+npm run dev
+```
+
+Сервер запустится на http://localhost:3000. При первом запуске создастся БД SQLite и начальные данные (админ, справочник, организации БООР).
+
+**Терминал 2 — фронтенд:**
+
+```bash
+cd frontend
+npm run dev
+```
+
+Откройте в браузере: **http://localhost:5173**. Фронт по умолчанию ходит за API на `http://localhost:3000`. Если бэкенд на другом порту, создайте `frontend/.env` с `VITE_API_URL=http://localhost:ВАШ_ПОРТ`.
+
+Вход: **admin@spearfishing.by** / **admin123**.
+
+---
+
+## Запуск через Docker
+
+```bash
+docker-compose up -d --build
+# Сервис: http://localhost:3000
+# Вход: admin@spearfishing.by / admin123
+```
+
+Переменные в `.env` или в `docker-compose`: `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`. Данные SQLite — в volume `app-data`. За прокси передавайте реальный IP в `X-Forwarded-For`.
 
 ## Деплой на Vercel (всё в одном проекте)
 

@@ -1,0 +1,98 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "title": "Реки Брестской области",
+    "source": "waterbodies_belarus.geojson",
+    "total_features": 4
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.122,
+          52.14546
+        ]
+      },
+      "properties": {
+        "id": 25,
+        "name": "Участок Днепровско-Бугского канала (Дрогичинский)",
+        "type": "river",
+        "type_ru": "Река/Канал",
+        "district": "Дрогичинский",
+        "region": "Брестская область",
+        "location_description": "в границах Дрогичинского района",
+        "activities": "подводная охота, лов рыбы на дорожку",
+        "has_coordinates": true,
+        "coordinate_source": "district_center_approx"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.55706,
+          52.17564
+        ]
+      },
+      "properties": {
+        "id": 39,
+        "name": "Участок Днепровско-Бугского канала (Ивановский)",
+        "type": "river",
+        "type_ru": "Река/Канал",
+        "district": "Ивановский",
+        "region": "Брестская область",
+        "location_description": "в границах Ивановского района",
+        "activities": "подводная охота, лов рыбы на дорожку",
+        "has_coordinates": true,
+        "coordinate_source": "district_center_approx"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.39989,
+          52.23442
+        ]
+      },
+      "properties": {
+        "id": 52,
+        "name": "Участок Днепровско-Бугского канала (Кобринский)",
+        "type": "river",
+        "type_ru": "Река/Канал",
+        "district": "Кобринский",
+        "region": "Брестская область",
+        "location_description": "в границах Кобринского района",
+        "activities": "подводная охота, лов рыбы на дорожку",
+        "has_coordinates": true,
+        "coordinate_source": "district_center_approx"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.08606,
+          52.10841
+        ]
+      },
+      "properties": {
+        "id": 71,
+        "name": "Участок Днепровско-Бугского канала (Пинский)",
+        "type": "river",
+        "type_ru": "Река/Канал",
+        "district": "Пинский",
+        "region": "Брестская область",
+        "location_description": "в границах Пинского района",
+        "activities": "подводная охота, лов рыбы на дорожку",
+        "has_coordinates": true,
+        "coordinate_source": "district_center_approx"
+      }
+    }
+  ]
+}

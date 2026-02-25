@@ -1,4 +1,5 @@
-const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+// Локально: по умолчанию бэкенд на :3000; можно задать VITE_API_URL в .env
+const API_BASE = (import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:3000' : '')).replace(/\/$/, '');
 const API = API_BASE ? `${API_BASE}/api` : '/api';
 
 function getToken(): string | null {
@@ -20,7 +21,7 @@ export async function request<T>(
   if (!res.ok) {
     const msg =
       res.status === 404
-        ? 'Сервер API недоступен (404). Разверните бэкенд (например на Railway) и в настройках Vercel задайте переменную VITE_API_URL, затем пересоберите проект.'
+        ? 'Сервер API недоступен (404). Запустите бэкенд в отдельном терминале: из папки backend выполните npm run dev.'
         : (data.error || res.statusText || 'Ошибка запроса');
     throw new Error(msg);
   }
@@ -80,6 +81,7 @@ export interface WaterBody {
   description: string | null;
   lat: string;
   lng: string;
+  geometry?: string | null; // GeoJSON: Polygon, LineString или Point
   permitInfo: string | null;
   orderIndex: number | null;
   createdAt?: string;

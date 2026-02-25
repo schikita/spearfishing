@@ -79,6 +79,10 @@
   min-height: 300px;
 }
 
+.map :global(.leaflet-control-attribution) {
+  display: none;
+}
+
 .loadingOverlay {
   position: absolute;
   top: 50%;

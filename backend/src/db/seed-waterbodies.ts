@@ -3,10 +3,12 @@ import path from 'path';
 import { db, waterBodies } from './index.js';
 import { gt } from 'drizzle-orm';
 
-// По умолчанию: brest_waterbodies.geojson в корне проекта
-const GEOJSON_PATH =
-  process.env.WATERBODIES_GEOJSON ||
-  path.join(process.cwd(), '..', 'brest_waterbodies.geojson');
+// По умолчанию: brest и minsk в корне проекта
+const ROOT = path.join(process.cwd(), '..');
+const DEFAULT_FILES = ['brest_waterbodies.geojson', 'minsk_waterbodies.geojson'];
+const GEOJSON_FILES = process.env.WATERBODIES_GEOJSON
+  ? process.env.WATERBODIES_GEOJSON.split(',').map((f) => f.trim())
+  : DEFAULT_FILES.map((f) => path.join(ROOT, f));
 
 interface GeoFeature {
   type: string;
@@ -49,44 +51,55 @@ function getCentroid(geom: GeoFeature['geometry']): [number, number] | null {
   return null;
 }
 
-async function seedWaterBodies() {
-  const raw = readFileSync(GEOJSON_PATH, 'utf-8');
-  const geojson = JSON.parse(raw) as { features?: GeoFeature[] };
-  const features = geojson.features || [];
-  if (!features.length) {
-    console.log('No features in GeoJSON');
-    return;
-  }
+function featureToRow(f: GeoFeature, orderOffset: number): Record<string, unknown> | null {
+  const coords = getCentroid(f.geometry);
+  if (!coords || coords.length < 2) return null;
+  const [lng, lat] = coords;
+  if (typeof lng !== 'number' || typeof lat !== 'number' || !Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  const p = f.properties || {};
+  const desc = [
+    p.location_description,
+    p.activities ? `Виды деятельности: ${p.activities}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const geom = f.geometry?.type && f.geometry?.coordinates ? JSON.stringify(f.geometry) : null;
+  return {
+    name: p.name || 'Без названия',
+    nameRu: p.name || null,
+    region: p.region || 'Не указана',
+    description: desc || null,
+    lat: String(lat),
+    lng: String(lng),
+    geometry: geom,
+    permitInfo: p.activities?.includes('подводная охота') ? 'Подводная охота по путёвке' : null,
+    orderIndex: p.id ?? orderOffset,
+  };
+}
 
+async function seedWaterBodies() {
   await db.delete(waterBodies).where(gt(waterBodies.id, 0));
 
-  const rows = features
-    .map((f) => {
-      const coords = getCentroid(f.geometry);
-      if (!coords || coords.length < 2) return null;
-      const [lng, lat] = coords;
-      if (typeof lng !== 'number' || typeof lat !== 'number' || !Number.isFinite(lng) || !Number.isFinite(lat)) return null;
-      const p = f.properties || {};
-      const desc = [
-        p.location_description,
-        p.activities ? `Виды деятельности: ${p.activities}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n');
-      const geom = f.geometry?.type && f.geometry?.coordinates ? JSON.stringify(f.geometry) : null;
-      return {
-        name: p.name || 'Без названия',
-        nameRu: p.name || null,
-        region: p.region || 'Не указана',
-        description: desc || null,
-        lat: String(lat),
-        lng: String(lng),
-        geometry: geom,
-        permitInfo: p.activities?.includes('подводная охота') ? 'Подводная охота по путёвке' : null,
-        orderIndex: p.id ?? 0,
-      };
-    })
-    .filter((r): r is NonNullable<typeof r> => r !== null);
+  const rows: Record<string, unknown>[] = [];
+  let order = 0;
+
+  for (const filePath of GEOJSON_FILES) {
+    try {
+      const raw = readFileSync(filePath, 'utf-8');
+      const geojson = JSON.parse(raw) as { features?: GeoFeature[] };
+      const features = geojson.features || [];
+      for (const f of features) {
+        const row = featureToRow(f, ++order);
+        if (row) {
+          row.orderIndex = order;
+          rows.push(row);
+        }
+      }
+      console.log(`  ${path.basename(filePath)}: ${features.length} features`);
+    } catch (err) {
+      console.warn(`  ${path.basename(filePath)}: skip (${err instanceof Error ? err.message : err})`);
+    }
+  }
 
   const BATCH = 100;
   for (let i = 0; i < rows.length; i += BATCH) {
@@ -94,7 +107,7 @@ async function seedWaterBodies() {
     await db.insert(waterBodies).values(chunk);
   }
 
-  console.log(`Loaded ${rows.length} water bodies from ${path.basename(GEOJSON_PATH)}`);
+  console.log(`Loaded ${rows.length} water bodies from ${GEOJSON_FILES.length} file(s)`);
 }
 
 seedWaterBodies().catch((err) => {
