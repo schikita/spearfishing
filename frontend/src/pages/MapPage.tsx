@@ -1,24 +1,56 @@
-import { useEffect, useState, useCallback, Fragment } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Polygon } from 'react-leaflet';
+import { useEffect, useState, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
+import buffer from '@turf/buffer';
+import { lineString } from '@turf/helpers';
 import { api, WaterBody } from '../api/client';
 import styles from './MapPage.module.css';
+
+// LineString → Polygon через буфер (реки отображаются как полигоны)
+const LINE_BUFFER_KM = 0.15; // ~150 м ширина «коридора» реки
+function lineStringToPolygonPositions(geom: { type: string; coordinates: unknown }): [number, number][] | null {
+  if (geom?.type !== 'LineString' || !Array.isArray(geom.coordinates) || geom.coordinates.length < 2) return null;
+  try {
+    const line = lineString(geom.coordinates as [number, number][]);
+    const buffered = buffer(line, LINE_BUFFER_KM, { units: 'kilometers' });
+    if (!buffered?.geometry) return null;
+    const g = buffered.geometry;
+    const coords =
+      g.type === 'Polygon' && g.coordinates?.[0]
+        ? g.coordinates[0]
+        : g.type === 'MultiPolygon' && g.coordinates?.[0]?.[0]
+          ? g.coordinates[0][0]
+          : null;
+    if (!coords?.length) return null;
+    return coords.map((pos: number[]) => [pos[1], pos[0]] as [number, number]);
+  } catch {
+    return null;
+  }
+}
 
 // GeoJSON coordinates [lng, lat] → Leaflet [lat, lng]
 function toLeafletPositions(geom: { type: string; coordinates: unknown }): [number, number][] | null {
   if (!geom?.coordinates) return null;
-  const c = geom.coordinates;
+  const c = geom.coordinates as unknown[];
   if (geom.type === 'Point') {
     if (Array.isArray(c) && c.length >= 2 && typeof c[0] === 'number') return [[c[1] as number, c[0] as number]];
-    if (Array.isArray(c) && c[0] && Array.isArray(c[0]) && c[0].length >= 2) {
+    if (Array.isArray(c) && c[0] && Array.isArray(c[0]) && (c[0] as number[]).length >= 2) {
       return (c as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
     }
   }
-  if (geom.type === 'LineString' && Array.isArray(c)) {
+  if (geom.type === 'LineString' && Array.isArray(c) && c.length >= 2) {
     return (c as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
   }
-  if (geom.type === 'Polygon' && Array.isArray(c) && c[0]?.length) {
-    return (c[0] as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
+  if (geom.type === 'Polygon' && Array.isArray(c)) {
+    let ring: number[][];
+    if (c[0] && Array.isArray(c[0])) {
+      ring = typeof (c[0] as number[])[0] === 'number' ? (c as number[][]) : (c[0] as number[][]);
+    } else {
+      return null;
+    }
+    if (ring && ring.length >= 3) {
+      return ring.map((pos) => [pos[1], pos[0]] as [number, number]);
+    }
   }
   return null;
 }
@@ -163,63 +195,39 @@ export default function MapPage() {
           />
           {waterBodies.map((wb) => {
             const geom = wb.geometry ? (() => { try { return JSON.parse(wb.geometry!); } catch { return null; } })() : null;
-            const positions = geom ? toLeafletPositions(geom) : null;
             const lat = parseFloat(wb.lat);
             const lng = parseFloat(wb.lng);
             const center: [number, number] = [lat, lng];
             const centerValid = Number.isFinite(lat) && Number.isFinite(lng);
-            const popup = (
-              <Popup>
-                <strong>{wb.nameRu || wb.name}</strong>
-                <br />
-                {wb.region}
-                {wb.description && <><br /><small>{wb.description}</small></>}
-                <br />
-                <button type="button" onClick={() => buildRoute(wb)} className={styles.popupBtn}>
-                  Построить маршрут сюда
-                </button>
-              </Popup>
-            );
-            const multiPositions = geom ? toLeafletMultiPolygon(geom) : null;
-            if (geom?.type === 'MultiPolygon' && multiPositions?.length && multiPositions.every(isValidRing)) {
-              return (
-                <Fragment key={wb.id}>
-                  {multiPositions.map((positions, i) => (
-                    <Polygon
-                      key={`${wb.id}-${i}`}
-                      positions={positions}
-                      pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
-                      eventHandlers={{ click: () => buildRoute(wb) }}
-                    >
-                      {i === 0 ? popup : null}
-                    </Polygon>
-                  ))}
-                </Fragment>
-              );
-            }
-            if ((geom?.type === 'Polygon' || geom?.type === 'Point') && positions && positions.length >= 3 && isValidRing(positions)) {
-              return (
-                <Polygon
+            const popupHtml = `<strong>${wb.nameRu || wb.name}</strong><br/>${wb.region}${wb.description ? `<br/><small>${wb.description.replace(/</g, '&lt;')}</small>` : ''}<br/><button class="${styles.popupBtn}" data-wb-id="${wb.id}">Построить маршрут сюда</button>`;
+
+            if (geom && (geom.type === 'Polygon' || geom.type === 'MultiPolygon' || geom.type === 'LineString')) {
+              let geojsonData: GeoJSON.Feature | null = null;
+              if (geom.type === 'LineString') {
+                const buffered = lineStringToPolygonPositions(geom);
+                if (buffered && buffered.length >= 3) {
+                  geojsonData = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [buffered.map((p) => [p[1], p[0]])] }, properties: { id: wb.id } };
+                }
+              } else {
+                geojsonData = { type: 'Feature', geometry: geom as GeoJSON.Geometry, properties: { id: wb.id } };
+              }
+              if (geojsonData && geojsonData.geometry.type !== 'LineString') {
+                return (
+                <GeoJSON
                   key={wb.id}
-                  positions={positions}
-                  pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
-                  eventHandlers={{ click: () => buildRoute(wb) }}
-                >
-                  {popup}
-                </Polygon>
+                  data={geojsonData}
+                  style={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
+                  onEachFeature={(_, layer) => {
+                    layer.bindPopup(popupHtml);
+                    layer.on('click', () => buildRoute(wb));
+                    layer.on('popupopen', () => {
+                      const el = layer.getPopup()?.getElement();
+                      el?.querySelector(`[data-wb-id="${wb.id}"]`)?.addEventListener('click', () => buildRoute(wb));
+                    });
+                  }}
+                />
               );
-            }
-            if (geom?.type === 'LineString' && positions && positions.length >= 2 && isValidRing(positions)) {
-              return (
-                <Polyline
-                  key={wb.id}
-                  positions={positions}
-                  pathOptions={{ color: '#2563eb', weight: 3 }}
-                  eventHandlers={{ click: () => buildRoute(wb) }}
-                >
-                  {popup}
-                </Polyline>
-              );
+              }
             }
             if (!centerValid) return null;
             return (
@@ -229,7 +237,16 @@ export default function MapPage() {
                 icon={waterIcon}
                 eventHandlers={{ click: () => buildRoute(wb) }}
               >
-                {popup}
+                <Popup>
+                  <strong>{wb.nameRu || wb.name}</strong>
+                  <br />
+                  {wb.region}
+                  {wb.description && <><br /><small>{wb.description}</small></>}
+                  <br />
+                  <button type="button" onClick={() => buildRoute(wb)} className={styles.popupBtn}>
+                    Построить маршрут сюда
+                  </button>
+                </Popup>
               </Marker>
             );
           })}

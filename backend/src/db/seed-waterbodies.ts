@@ -5,7 +5,7 @@ import { gt } from 'drizzle-orm';
 
 // По умолчанию: brest и minsk в корне проекта
 const ROOT = path.join(process.cwd(), '..');
-const DEFAULT_FILES = ['brest_waterbodies.geojson', 'minsk_waterbodies.geojson'];
+const DEFAULT_FILES = ['brest_waterbodies.geojson', 'minsk_waterbodies.geojson', 'grodno_waterbodies.geojson', 'vitebsk_waterbodies.geojson'];
 const GEOJSON_FILES = process.env.WATERBODIES_GEOJSON
   ? process.env.WATERBODIES_GEOJSON.split(',').map((f) => f.trim())
   : DEFAULT_FILES.map((f) => path.join(ROOT, f));
@@ -58,6 +58,8 @@ function featureToRow(f: GeoFeature, orderOffset: number): Record<string, unknow
   if (typeof lng !== 'number' || typeof lat !== 'number' || !Number.isFinite(lng) || !Number.isFinite(lat)) return null;
   const p = f.properties || {};
   const desc = [
+    p.type_ru ? `Тип: ${p.type_ru}` : null,
+    p.district ? `Район: ${p.district}` : null,
     p.location_description,
     p.activities ? `Виды деятельности: ${p.activities}` : '',
   ]
