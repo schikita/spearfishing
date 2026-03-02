@@ -44,9 +44,11 @@ function getCentroid(geom: GeoFeature['geometry']): [number, number] | null {
     return [c[0][0][0], c[0][0][1]];
   }
   if (geom.type === 'MultiPolygon' && Array.isArray(c) && c[0]) {
-    const first = c[0];
-    if (Array.isArray(first) && first[0] && Array.isArray(first[0])) return [first[0][0], first[0][1]];
-    if (Array.isArray(first) && typeof first[0] === 'number') return [first[0], first[1]];
+    const firstPoly = c[0] as number[][][];
+    const firstRing = firstPoly?.[0];
+    if (firstRing?.[0] && Array.isArray(firstRing[0]) && firstRing[0].length >= 2) {
+      return [firstRing[0][0], firstRing[0][1]];
+    }
   }
   return null;
 }

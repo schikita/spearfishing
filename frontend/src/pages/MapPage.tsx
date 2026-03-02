@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Polygon, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import buffer from '@turf/buffer';
 import { lineString } from '@turf/helpers';
@@ -28,47 +28,20 @@ function lineStringToPolygonPositions(geom: { type: string; coordinates: unknown
   }
 }
 
-// GeoJSON coordinates [lng, lat] → Leaflet [lat, lng]
-function toLeafletPositions(geom: { type: string; coordinates: unknown }): [number, number][] | null {
-  if (!geom?.coordinates) return null;
-  const c = geom.coordinates as unknown[];
-  if (geom.type === 'Point') {
-    if (Array.isArray(c) && c.length >= 2 && typeof c[0] === 'number') return [[c[1] as number, c[0] as number]];
-    if (Array.isArray(c) && c[0] && Array.isArray(c[0]) && (c[0] as number[]).length >= 2) {
-      return (c as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
-    }
-  }
-  if (geom.type === 'LineString' && Array.isArray(c) && c.length >= 2) {
-    return (c as number[][]).map((pos) => [pos[1], pos[0]] as [number, number]);
-  }
-  if (geom.type === 'Polygon' && Array.isArray(c)) {
-    let ring: number[][];
-    if (c[0] && Array.isArray(c[0])) {
-      ring = typeof (c[0] as number[])[0] === 'number' ? (c as number[][]) : (c[0] as number[][]);
-    } else {
-      return null;
-    }
-    if (ring && ring.length >= 3) {
-      return ring.map((pos) => [pos[1], pos[0]] as [number, number]);
-    }
-  }
-  return null;
-}
+const isValidCoord = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 
-const isValidPos = (p: [number, number]) => Number.isFinite(p[0]) && Number.isFinite(p[1]);
-const isValidRing = (r: [number, number][]) => r.length >= 2 && r.every(isValidPos);
-
-function toLeafletMultiPolygon(geom: { type: string; coordinates: unknown }): [number, number][][] | null {
-  if (geom?.type !== 'MultiPolygon' || !Array.isArray(geom.coordinates)) return null;
-  const c = geom.coordinates;
-  const toRing = (ring: number[][]) => ring.map((pos) => [pos[1], pos[0]] as [number, number]);
-  if (c.length && typeof c[0][0] === 'number') {
-    return [toRing(c as number[][])];
-  }
-  return (c as (number[][] | number[][][])[]).map((poly) => {
-    const ring: number[][] = typeof poly[0]?.[0] === 'number' ? (poly as number[][]) : (poly[0] as number[][]);
-    return toRing(ring);
-  });
+// Polygon: GeoJSON [[[lng,lat],...]] or [[ring1],[ring2],...] → Leaflet [lat,lng][] or [[ring1],[ring2],...]
+function toLeafletPolygon(geom: { type: string; coordinates: unknown }): [number, number][] | [number, number][][] | null {
+  if (geom?.type !== 'Polygon' || !Array.isArray(geom.coordinates)) return null;
+  const c = geom.coordinates as number[][][];
+  const toRing = (ring: number[][]) =>
+    ring
+      .map((pos) => (isValidCoord(pos[0]) && isValidCoord(pos[1]) ? [pos[1], pos[0]] as [number, number] : null))
+      .filter((p): p is [number, number] => p !== null);
+  if (!c.length) return null;
+  const rings = c.map((ring) => toRing(ring)).filter((r) => r.length >= 3);
+  if (!rings.length) return null;
+  return rings.length === 1 ? rings[0] : rings;
 }
 
 const BELARUS_CENTER: [number, number] = [53.9, 27.5];
@@ -202,6 +175,38 @@ export default function MapPage() {
             const popupHtml = `<strong>${wb.nameRu || wb.name}</strong><br/>${wb.region}${wb.description ? `<br/><small>${wb.description.replace(/</g, '&lt;')}</small>` : ''}<br/><button class="${styles.popupBtn}" data-wb-id="${wb.id}">Построить маршрут сюда</button>`;
 
             if (geom && (geom.type === 'Polygon' || geom.type === 'MultiPolygon' || geom.type === 'LineString')) {
+              if (geom.type === 'Polygon') {
+                const positions = toLeafletPolygon(geom);
+                const validPositions =
+                  positions &&
+                  (Array.isArray(positions[0]) && !Array.isArray(positions[0][0])
+                    ? (positions as [number, number][]).length >= 3 &&
+                      (positions as [number, number][]).every((p) => isValidCoord(p[0]) && isValidCoord(p[1]))
+                    : (positions as [number, number][][]).every(
+                        (r) => r.length >= 3 && r.every((p) => isValidCoord(p[0]) && isValidCoord(p[1]))
+                      ));
+                if (validPositions) {
+                  return (
+                    <Polygon
+                      key={wb.id}
+                      positions={positions as [number, number][] | [number, number][][]}
+                      pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
+                      eventHandlers={{ click: () => buildRoute(wb) }}
+                    >
+                      <Popup>
+                        <strong>{wb.nameRu || wb.name}</strong>
+                        <br />
+                        {wb.region}
+                        {wb.description && <><br /><small>{wb.description}</small></>}
+                        <br />
+                        <button type="button" onClick={() => buildRoute(wb)} className={styles.popupBtn}>
+                          Построить маршрут сюда
+                        </button>
+                      </Popup>
+                    </Polygon>
+                  );
+                }
+              }
               let geojsonData: GeoJSON.Feature | null = null;
               if (geom.type === 'LineString') {
                 const buffered = lineStringToPolygonPositions(geom);
@@ -250,11 +255,20 @@ export default function MapPage() {
               </Marker>
             );
           })}
-          {userPos && <Marker position={userPos} icon={userIcon} />}
-          {routeCoords.length > 0 && (
-            <Polyline positions={routeCoords} color="#3fb950" weight={4} opacity={0.9} />
+          {userPos && isValidCoord(userPos[0]) && isValidCoord(userPos[1]) && (
+            <Marker position={userPos} icon={userIcon} />
           )}
-          {fitPoints.length >= 2 && <FitBounds points={fitPoints} />}
+          {routeCoords.length > 0 && (
+            <Polyline
+              positions={routeCoords.filter((c) => isValidCoord(c[0]) && isValidCoord(c[1]))}
+              color="#3fb950"
+              weight={4}
+              opacity={0.9}
+            />
+          )}
+          {fitPoints.length >= 2 && fitPoints.every((p) => isValidCoord(p[0]) && isValidCoord(p[1])) && (
+            <FitBounds points={fitPoints} />
+          )}
         </MapContainer>
       </div>
       {loading && <div className={styles.loadingOverlay}>Загрузка водоёмов…</div>}

@@ -1,7 +1,9 @@
 {
   "name": "spearfishing-by",
   "private": true,
-  "engines": { "node": "20.x" },
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "postinstall": "node scripts/postinstall.cjs",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
@@ -12,6 +14,7 @@
     "build:frontend": "cd frontend && npm run build",
     "start": "cd backend && npm run start",
     "db:seed-waterbodies": "cd backend && npm run db:seed-waterbodies",
+    "scripts:convert-to-polygon": "tsx scripts/convert-all-to-polygon.ts",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down"
@@ -20,6 +23,8 @@
     "serverless-http": "^3.2.0"
   },
   "devDependencies": {
+    "@turf/buffer": "^7.3.4",
+    "@turf/helpers": "^7.3.4",
     "concurrently": "^8.2.2"
   }
 }

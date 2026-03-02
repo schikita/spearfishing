@@ -2,7 +2,9 @@
   "name": "spearfishing-backend",
   "version": "1.0.0",
   "type": "module",
-  "engines": { "node": "20.x" },
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -14,16 +16,18 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.2.2",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.29.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "better-sqlite3": "^9.2.2",
     "pg": "^8.11.3"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.8",
+    "@turf/buffer": "^7.3.4",
+    "@turf/helpers": "^7.3.4",
     "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.8",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
