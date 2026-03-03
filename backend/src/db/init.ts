@@ -64,6 +64,22 @@ export function initDb(): void {
   } catch {
     /* column already exists */
   }
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN has_access INTEGER NOT NULL DEFAULT 0');
+  } catch {
+    /* column already exists */
+  }
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      payment_id TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+  `);
 
   const adminCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
   if (adminCount.c === 0) {

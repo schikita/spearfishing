@@ -13,13 +13,14 @@ router.get('/users', async (_req, res) => {
     email: users.email,
     role: users.role,
     allowedIp: users.allowedIp,
+    hasAccess: users.hasAccess,
     createdAt: users.createdAt,
   }).from(users).orderBy(asc(users.id));
   res.json(list);
 });
 
 router.post('/users', async (req, res) => {
-  const { email, password, allowedIp } = req.body;
+  const { email, password, allowedIp, hasAccess } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Укажите email и пароль' });
   }
@@ -29,16 +30,18 @@ router.post('/users', async (req, res) => {
     passwordHash: hash,
     role: 'user',
     allowedIp: allowedIp ? String(allowedIp).trim() || null : null,
+    hasAccess: hasAccess ? 1 : 0,
   });
   res.status(201).json({ ok: true });
 });
 
 router.patch('/users/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { allowedIp, password } = req.body;
-  const updates: { allowedIp?: string | null; passwordHash?: string } = {};
+  const { allowedIp, password, hasAccess } = req.body;
+  const updates: { allowedIp?: string | null; passwordHash?: string; hasAccess?: number } = {};
   if (allowedIp !== undefined) updates.allowedIp = allowedIp === '' ? null : String(allowedIp).trim();
   if (password) updates.passwordHash = await bcrypt.hash(String(password), 10);
+  if (hasAccess !== undefined) updates.hasAccess = hasAccess ? 1 : 0;
   if (Object.keys(updates).length === 0) {
     return res.status(400).json({ error: 'Нет данных для обновления' });
   }

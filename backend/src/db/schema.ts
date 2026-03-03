@@ -6,6 +6,7 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash').notNull(),
   role: text('role').notNull().default('user'), // 'admin' | 'user'
   allowedIp: text('allowed_ip'), // null = not set, one IP per user
+  hasAccess: integer('has_access').notNull().default(0), // 1 = доступ к карте выдан админом
   createdAt: text('created_at').notNull().default('CURRENT_TIMESTAMP'),
 });
 
@@ -47,7 +48,17 @@ export const permitOrganizations = sqliteTable('permit_organizations', {
   createdAt: text('created_at').notNull().default('CURRENT_TIMESTAMP'),
 });
 
+export const subscriptions = sqliteTable('subscriptions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull(),
+  paymentId: text('payment_id'),
+  status: text('status').notNull().default('pending'), // pending | active | expired
+  expiresAt: text('expires_at').notNull(),
+  createdAt: text('created_at').notNull().default('CURRENT_TIMESTAMP'),
+});
+
 export type User = typeof users.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
 export type WaterBody = typeof waterBodies.$inferSelect;
 export type ReferenceSection = typeof referenceSections.$inferSelect;
 export type PermitOrganization = typeof permitOrganizations.$inferSelect;

@@ -5,7 +5,7 @@ import { gt } from 'drizzle-orm';
 
 // По умолчанию: brest и minsk в корне проекта
 const ROOT = path.join(process.cwd(), '..');
-const DEFAULT_FILES = ['brest_waterbodies.geojson', 'minsk_waterbodies.geojson', 'grodno_waterbodies.geojson', 'vitebsk_waterbodies.geojson'];
+const DEFAULT_FILES = ['brest_waterbodies.geojson', 'minsk_waterbodies.geojson', 'grodno_waterbodies.geojson', 'vitebsk_waterbodies.geojson', 'mogilev_waterbodies.geojson', 'gomel_waterbodies.geojson'];
 const GEOJSON_FILES = process.env.WATERBODIES_GEOJSON
   ? process.env.WATERBODIES_GEOJSON.split(',').map((f) => f.trim())
   : DEFAULT_FILES.map((f) => path.join(ROOT, f));
@@ -29,7 +29,7 @@ interface GeoFeature {
 }
 
 function getCentroid(geom: GeoFeature['geometry']): [number, number] | null {
-  if (!geom?.coordinates) return null;
+  if (!geom || !geom.coordinates) return null;
   const c = geom.coordinates;
   if (geom.type === 'Point' && Array.isArray(c)) {
     if (c.length >= 2 && typeof c[0] === 'number') return [c[0] as number, c[1] as number];

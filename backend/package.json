@@ -21,7 +21,8 @@
     "drizzle-orm": "^0.29.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "yookassa-ts": "^0.1.14"
   },
   "devDependencies": {
     "@turf/buffer": "^7.3.4",

@@ -31,21 +31,26 @@ export async function request<T>(
 export const api = {
   auth: {
     login: (email: string, password: string) =>
-      request<{ token: string; user: { id: number; email: string; role: string } }>('/auth/login', {
+      request<{ token: string; user: { id: number; email: string; role: string; hasAccess?: boolean } }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),
-    me: () => request<{ user: { id: number; email: string; role: string } }>('/auth/me'),
+    me: () => request<{ user: { id: number; email: string; role: string; hasAccess?: boolean } }>('/auth/me'),
   },
   waterBodies: () => request<WaterBody[]>('/water-bodies'),
+  subscription: {
+    create: () => request<{ paymentUrl: string; paymentId: string }>('/subscription/create', { method: 'POST' }),
+    status: () =>
+      request<{ hasAccess: boolean; expiresAt: string | null; status?: string }>('/subscription/status'),
+  },
   reference: () => request<ReferenceSection[]>('/reference'),
   referenceBySlug: (slug: string) => request<ReferenceSection>(`/reference/${slug}`),
   permitOrganizations: () => request<PermitOrganization[]>('/permit-organizations'),
   admin: {
     users: () => request<AdminUser[]>('/admin/users'),
-    createUser: (body: { email: string; password: string; allowedIp?: string }) =>
+    createUser: (body: { email: string; password: string; allowedIp?: string; hasAccess?: boolean }) =>
       request<{ id: number }>('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
-    updateUser: (id: number, body: { allowedIp?: string; password?: string }) =>
+    updateUser: (id: number, body: { allowedIp?: string; password?: string; hasAccess?: boolean }) =>
       request<{ ok: boolean }>(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     deleteUser: (id: number) =>
       request<{ ok: boolean }>(`/admin/users/${id}`, { method: 'DELETE' }),
@@ -116,5 +121,6 @@ export interface AdminUser {
   email: string;
   role: string;
   allowedIp: string | null;
+  hasAccess?: number;
   createdAt: string;
 }

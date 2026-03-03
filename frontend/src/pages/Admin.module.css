@@ -125,6 +125,11 @@
   color: var(--text);
 }
 
+.accessOk {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .danger {
   padding: 0.25rem 0.5rem;
   font-size: 0.85rem;

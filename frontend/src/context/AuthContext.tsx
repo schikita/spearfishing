@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 
-type User = { id: number; email: string; role: string } | null;
+type User = { id: number; email: string; role: string; hasAccess?: boolean } | null;
 
 const AuthContext = createContext<{
   user: User;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  loadUser: () => Promise<void>;
   loading: boolean;
 }>(null!);
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loadUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

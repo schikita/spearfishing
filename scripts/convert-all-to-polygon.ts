@@ -11,7 +11,7 @@ import buffer from '@turf/buffer';
 import { point, lineString } from '@turf/helpers';
 
 const ROOT = path.join(process.cwd(), path.basename(process.cwd()) === 'scripts' ? '..' : '.');
-const FILES = ['brest_waterbodies.geojson', 'minsk_waterbodies.geojson', 'grodno_waterbodies.geojson', 'vitebsk_waterbodies.geojson'];
+const FILES = ['brest_waterbodies.geojson', 'minsk_waterbodies.geojson', 'grodno_waterbodies.geojson', 'vitebsk_waterbodies.geojson', 'mogilev_waterbodies.geojson', 'gomel_waterbodies.geojson'];
 
 const LINE_BUFFER_KM = 0.15;
 const POINT_BUFFER_KM = 0.002; // ~2 м — маленькая точка на карте

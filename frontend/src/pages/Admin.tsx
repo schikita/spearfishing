@@ -87,6 +87,7 @@ function AdminUsers({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [allowedIp, setAllowedIp] = useState("");
+  const [hasAccess, setHasAccess] = useState(false);
   const [editingIp, setEditingIp] = useState<number | null>(null);
   const [ipValue, setIpValue] = useState("");
 
@@ -97,10 +98,12 @@ function AdminUsers({
         email,
         password,
         allowedIp: allowedIp || undefined,
+        hasAccess,
       });
       setEmail("");
       setPassword("");
       setAllowedIp("");
+      setHasAccess(false);
       onSave();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Ошибка");
@@ -111,6 +114,15 @@ function AdminUsers({
     try {
       await api.admin.updateUser(id, { allowedIp: ipValue });
       setEditingIp(null);
+      onSave();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Ошибка");
+    }
+  };
+
+  const toggleAccess = async (id: number, current: number) => {
+    try {
+      await api.admin.updateUser(id, { hasAccess: !current });
       onSave();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Ошибка");
@@ -135,10 +147,14 @@ function AdminUsers({
           required
         />
         <input
-          placeholder="IP (опционально, один доступ — один IP)"
+          placeholder="IP (опционально)"
           value={allowedIp}
           onChange={(e) => setAllowedIp(e.target.value)}
         />
+        <label>
+          <input type="checkbox" checked={hasAccess} onChange={(e) => setHasAccess(e.target.checked)} />
+          Доступ к карте
+        </label>
         <button type="submit">Создать</button>
       </form>
       <h2>Список пользователей</h2>
@@ -148,6 +164,7 @@ function AdminUsers({
             <th>ID</th>
             <th>Email</th>
             <th>Роль</th>
+            <th>Доступ к карте</th>
             <th>Привязанный IP</th>
             <th></th>
           </tr>
@@ -158,6 +175,20 @@ function AdminUsers({
               <td>{u.id}</td>
               <td>{u.email}</td>
               <td>{u.role}</td>
+              <td>
+                {u.role !== "admin" ? (
+                  <button
+                    type="button"
+                    className={u.hasAccess ? styles.accessOk : ""}
+                    onClick={() => toggleAccess(u.id, u.hasAccess ?? 0)}
+                    title={u.hasAccess ? "Отозвать доступ" : "Выдать доступ"}
+                  >
+                    {u.hasAccess ? "✓ Да" : "Нет"}
+                  </button>
+                ) : (
+                  "—"
+                )}
+              </td>
               <td>
                 {editingIp === u.id ? (
                   <>

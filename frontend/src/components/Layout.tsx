@@ -15,7 +15,14 @@ export default function Layout() {
         </Link>
         <nav className={styles.nav}>
           <Link to="/" className={location.pathname === '/' ? styles.active : ''}>Главная</Link>
-          <Link to="/map" className={location.pathname === '/map' ? styles.active : ''}>Карта</Link>
+          {user && (user.role === 'admin' || user.hasAccess) && (
+            <Link to="/map" className={location.pathname === '/map' ? styles.active : ''}>Карта</Link>
+          )}
+          {user && user.role !== 'admin' && !user.hasAccess && (
+            <Link to="/subscription" className={location.pathname === '/subscription' ? styles.active : ''}>
+              Подписка
+            </Link>
+          )}
           <Link to="/reference" className={location.pathname.startsWith('/reference') ? styles.active : ''}>Справочник</Link>
           <Link to="/contacts" className={location.pathname === '/contacts' ? styles.active : ''}>Разрешения</Link>
           {user ? (
