@@ -7,6 +7,7 @@ const AuthContext = createContext<{
   user: User;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
   loading: boolean;
@@ -46,6 +47,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
   };
 
+  const register = async (email: string, password: string) => {
+    const { token: t, user: u } = await api.auth.register(email, password);
+    localStorage.setItem('token', t);
+    setToken(t);
+    setUser(u);
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -53,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loadUser, loading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, loadUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

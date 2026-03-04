@@ -43,10 +43,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   if (!user) {
     return res.status(401).json({ error: 'Пользователь не найден' });
   }
-  const clientIp = getClientIp(req);
-  if (user.allowedIp && user.allowedIp !== clientIp) {
-    return res.status(403).json({ error: 'Доступ разрешён только с привязанного IP-адреса' });
-  }
   req.user = user;
   next();
 }
@@ -59,7 +55,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-/** Доступ к карте: админ, hasAccess от админа, или активная подписка */
+/** Доступ к карте: админ, hasAccess от админа, или активная подписка (привязана к аккаунту) */
 export async function requireMapAccess(req: Request, res: Response, next: NextFunction) {
   const u = req.user;
   if (!u) return res.status(401).json({ error: 'Требуется авторизация' });
@@ -72,6 +68,6 @@ export async function requireMapAccess(req: Request, res: Response, next: NextFu
     .where(and(eq(subscriptions.userId, u.id), eq(subscriptions.status, 'active'), gte(subscriptions.expiresAt, now)))
     .orderBy(desc(subscriptions.expiresAt))
     .limit(1);
-  if (sub) return next();
-  return res.status(403).json({ error: 'Доступ к карте не активирован. Оформите подписку или обратитесь к администратору.' });
+  if (!sub) return res.status(403).json({ error: 'Доступ к карте не активирован. Оформите подписку.' });
+  return next();
 }

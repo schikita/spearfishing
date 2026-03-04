@@ -10,6 +10,13 @@ router.get('/water-bodies', requireAuth, requireMapAccess, async (_req, res) => 
   res.json(list);
 });
 
+router.get('/water-bodies/:id', requireAuth, requireMapAccess, async (req, res) => {
+  const id = Number(req.params.id);
+  const [wb] = await db.select().from(waterBodies).where(eq(waterBodies.id, id));
+  if (!wb) return res.status(404).json({ error: 'Водоём не найден' });
+  res.json(wb);
+});
+
 router.get('/reference', async (_req, res) => {
   const list = await db.select().from(referenceSections).orderBy(asc(referenceSections.orderIndex), asc(referenceSections.id));
   res.json(list);

@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
 import { api, PermitOrganization } from '../api/client';
+import PageWithBg from '../components/PageWithBg';
 import styles from './Contacts.module.css';
 
 export default function Contacts() {
   const [list, setList] = useState<PermitOrganization[]>([]);
+  const [pageInfo, setPageInfo] = useState<{ title: string; intro: string }>({
+    title: 'Организации, выдающие разрешения',
+    intro: 'Контактная информация для получения путёвок на подводную охоту. Актуальные перечни водоёмов и условия — на сайтах организаций.',
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,14 +17,20 @@ export default function Contacts() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    api.settings.pageInfo().then((info) => {
+      const c = info.contacts;
+      if (c) setPageInfo({ title: c.title, intro: c.intro });
+    }).catch(() => {});
+  }, []);
+
   if (loading) return <div className={styles.loading}>Загрузка…</div>;
 
   return (
+    <PageWithBg pageKey="contacts" blur>
     <div className={styles.wrap}>
-      <h1>Организации, выдающие разрешения</h1>
-      <p className={styles.intro}>
-        Контактная информация для получения путёвок на подводную охоту. Актуальные перечни водоёмов и условия — на сайтах организаций.
-      </p>
+      <h1>{pageInfo.title}</h1>
+      <p className={styles.intro}>{pageInfo.intro}</p>
       <ul className={styles.list}>
         {list.map((org) => (
           <li key={org.id} className={styles.card}>
@@ -40,5 +51,6 @@ export default function Contacts() {
         <p className={styles.empty}>Список организаций пока пуст.</p>
       )}
     </div>
+    </PageWithBg>
   );
 }

@@ -1,18 +1,75 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { db, users, waterBodies, referenceSections, permitOrganizations } from '../db/index.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { db, users, waterBodies, referenceSections, permitOrganizations, pageSettings } from '../db/index.js';
 import { eq, asc } from 'drizzle-orm';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { getAuthBgUrl, getLogoUrl, getFaviconUrl, getPageBgUrl } from './settings.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOADS_DIR = path.join(__dirname, '../../uploads');
+const AUTH_BG_FILENAME = 'auth-bg.jpg';
 
 const router = Router();
 router.use(requireAuth, requireAdmin);
+
+function deleteByPrefix(prefix: string) {
+  if (!fs.existsSync(UPLOADS_DIR)) return;
+  const files = fs.readdirSync(UPLOADS_DIR);
+  for (const f of files) {
+    if (f.startsWith(prefix + '.')) {
+      fs.unlinkSync(path.join(UPLOADS_DIR, f));
+    }
+  }
+}
+
+const imageFilter = (_req: unknown, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const ok = /^image\/(jpeg|jpg|png|webp|svg\+xml|x-icon)$/i.test(file.mimetype);
+  cb(null, !!ok);
+};
+
+const authBgStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    cb(null, UPLOADS_DIR);
+  },
+  filename: () => AUTH_BG_FILENAME,
+});
+
+const logoStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.png';
+    cb(null, 'logo' + ext);
+  },
+});
+
+const faviconStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.ico';
+    cb(null, 'favicon' + ext);
+  },
+});
+
+const uploadAuthBg = multer({ storage: authBgStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
+const uploadLogo = multer({ storage: logoStorage, limits: { fileSize: 2 * 1024 * 1024 }, fileFilter: imageFilter });
+const uploadFavicon = multer({ storage: faviconStorage, limits: { fileSize: 512 * 1024 }, fileFilter: imageFilter });
 
 router.get('/users', async (_req, res) => {
   const list = await db.select({
     id: users.id,
     email: users.email,
     role: users.role,
-    allowedIp: users.allowedIp,
     hasAccess: users.hasAccess,
     createdAt: users.createdAt,
   }).from(users).orderBy(asc(users.id));
@@ -20,7 +77,7 @@ router.get('/users', async (_req, res) => {
 });
 
 router.post('/users', async (req, res) => {
-  const { email, password, allowedIp, hasAccess } = req.body;
+  const { email, password, hasAccess } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Укажите email и пароль' });
   }
@@ -29,7 +86,6 @@ router.post('/users', async (req, res) => {
     email: String(email).trim().toLowerCase(),
     passwordHash: hash,
     role: 'user',
-    allowedIp: allowedIp ? String(allowedIp).trim() || null : null,
     hasAccess: hasAccess ? 1 : 0,
   });
   res.status(201).json({ ok: true });
@@ -37,9 +93,8 @@ router.post('/users', async (req, res) => {
 
 router.patch('/users/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { allowedIp, password, hasAccess } = req.body;
-  const updates: { allowedIp?: string | null; passwordHash?: string; hasAccess?: number } = {};
-  if (allowedIp !== undefined) updates.allowedIp = allowedIp === '' ? null : String(allowedIp).trim();
+  const { password, hasAccess } = req.body;
+  const updates: { passwordHash?: string; hasAccess?: number } = {};
   if (password) updates.passwordHash = await bcrypt.hash(String(password), 10);
   if (hasAccess !== undefined) updates.hasAccess = hasAccess ? 1 : 0;
   if (Object.keys(updates).length === 0) {
@@ -180,6 +235,140 @@ router.patch('/permit-organizations/:id', async (req, res) => {
 
 router.delete('/permit-organizations/:id', async (req, res) => {
   await db.delete(permitOrganizations).where(eq(permitOrganizations.id, Number(req.params.id)));
+  res.json({ ok: true });
+});
+
+// Настройки: фон авторизации/регистрации
+router.get('/settings/auth-bg', (_req, res) => {
+  const url = getAuthBgUrl();
+  res.json({ url });
+});
+
+router.post('/settings/auth-bg', uploadAuthBg.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
+  res.json({ url: `/uploads/${AUTH_BG_FILENAME}` });
+});
+
+router.delete('/settings/auth-bg', (_req, res) => {
+  const filePath = path.join(UPLOADS_DIR, AUTH_BG_FILENAME);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  res.json({ ok: true });
+});
+
+// Логотип
+router.get('/settings/logo', (_req, res) => {
+  res.json({ url: getLogoUrl() });
+});
+
+router.post('/settings/logo', uploadLogo.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
+  const keep = req.file.filename;
+  const files = fs.existsSync(UPLOADS_DIR) ? fs.readdirSync(UPLOADS_DIR) : [];
+  for (const f of files) {
+    if (f.startsWith('logo.') && f !== keep) fs.unlinkSync(path.join(UPLOADS_DIR, f));
+  }
+  res.json({ url: `/uploads/${keep}` });
+});
+
+router.delete('/settings/logo', (_req, res) => {
+  deleteByPrefix('logo');
+  res.json({ ok: true });
+});
+
+// Фавиконка
+router.get('/settings/favicon', (_req, res) => {
+  res.json({ url: getFaviconUrl() });
+});
+
+router.post('/settings/favicon', uploadFavicon.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
+  const keep = req.file.filename;
+  const files = fs.existsSync(UPLOADS_DIR) ? fs.readdirSync(UPLOADS_DIR) : [];
+  for (const f of files) {
+    if (f.startsWith('favicon.') && f !== keep) fs.unlinkSync(path.join(UPLOADS_DIR, f));
+  }
+  res.json({ url: `/uploads/${keep}` });
+});
+
+router.delete('/settings/favicon', (_req, res) => {
+  deleteByPrefix('favicon');
+  res.json({ ok: true });
+});
+
+// Фоны страниц
+const PAGE_KEYS = ['home', 'map', 'reference', 'contacts', 'info'];
+
+function createPageBgStorage(prefix: string) {
+  return multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      cb(null, UPLOADS_DIR);
+    },
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname) || '.jpg';
+      cb(null, prefix + '-bg' + ext);
+    },
+  });
+}
+
+for (const key of PAGE_KEYS) {
+  const storage = createPageBgStorage(key);
+  const uploadMw = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
+  router.get(`/settings/page-bg/${key}`, (_req, res) => {
+    res.json({ url: getPageBgUrl(key) });
+  });
+  router.post(`/settings/page-bg/${key}`, uploadMw.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
+    const keep = req.file.filename;
+    const files = fs.existsSync(UPLOADS_DIR) ? fs.readdirSync(UPLOADS_DIR) : [];
+    for (const f of files) {
+      if (f.startsWith(`${key}-bg.`) && f !== keep) fs.unlinkSync(path.join(UPLOADS_DIR, f));
+    }
+    res.json({ url: `/uploads/${keep}` });
+  });
+  router.delete(`/settings/page-bg/${key}`, (_req, res) => {
+    const files = fs.existsSync(UPLOADS_DIR) ? fs.readdirSync(UPLOADS_DIR) : [];
+    for (const f of files) {
+      if (f.startsWith(`${key}-bg.`)) fs.unlinkSync(path.join(UPLOADS_DIR, f));
+    }
+    res.json({ ok: true });
+  });
+}
+
+// Информация страниц (справочник, разрешения, информация)
+router.get('/settings/page-info', async (_req, res) => {
+  const rows = await db.select().from(pageSettings);
+  const info: Record<string, { title: string; intro: string; phone?: string; email?: string }> = {};
+  for (const r of rows) {
+    const entry: { title: string; intro: string; phone?: string; email?: string } = { title: r.title, intro: r.intro };
+    if (r.phone) entry.phone = r.phone;
+    if (r.email) entry.email = r.email;
+    info[r.pageKey] = entry;
+  }
+  res.json(info);
+});
+
+router.patch('/settings/page-info/:pageKey', async (req, res) => {
+  const pageKey = req.params.pageKey;
+  if (!['reference', 'contacts', 'info'].includes(pageKey)) {
+    return res.status(400).json({ error: 'Недопустимая страница' });
+  }
+  const { title, intro, phone, email } = req.body;
+  const [existing] = await db.select().from(pageSettings).where(eq(pageSettings.pageKey, pageKey));
+  const updates: { title: string; intro: string; updatedAt: string; phone?: string | null; email?: string | null } = {
+    title: title !== undefined ? String(title) : (existing?.title ?? ''),
+    intro: intro !== undefined ? String(intro) : (existing?.intro ?? ''),
+    updatedAt: new Date().toISOString(),
+  };
+  if (pageKey === 'info') {
+    updates.phone = phone !== undefined ? (phone === '' ? null : String(phone)) : (existing as { phone?: string | null })?.phone ?? null;
+    updates.email = email !== undefined ? (email === '' ? null : String(email)) : (existing as { email?: string | null })?.email ?? null;
+  }
+  if (existing) {
+    await db.update(pageSettings).set(updates).where(eq(pageSettings.pageKey, pageKey));
+  } else {
+    await db.insert(pageSettings).values({ pageKey, ...updates });
+  }
   res.json({ ok: true });
 });
 

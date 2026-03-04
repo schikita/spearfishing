@@ -1,3 +1,31 @@
+/* Фон страницы входа/регистрации */
+.authPage {
+  position: relative;
+  flex: 1;
+  min-height: calc(100vh - 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  background-color: #000;
+}
+
+.authOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.authContent {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
 .wrap {
   display: flex;
   justify-content: center;
@@ -69,4 +97,14 @@
   border-radius: 8px;
   color: var(--danger);
   font-size: 0.9rem;
+}
+
+.footer {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.footer a {
+  color: var(--accent);
 }

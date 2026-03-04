@@ -1,0 +1,75 @@
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.backLink:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.wrap h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.region {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.section p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.link {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.25rem;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: var(--radius);
+  font-weight: 500;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+  color: var(--bg);
+  text-decoration: none;
+}
+
+.loading {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.error {
+  color: var(--danger);
+  margin-bottom: 1rem;
+}

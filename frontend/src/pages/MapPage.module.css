@@ -65,12 +65,344 @@
   color: var(--text-muted);
 }
 
+.routePanel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 100%);
+  max-height: 100%;
+  background: rgba(22, 27, 34, 0.97);
+  backdrop-filter: blur(12px);
+  border-left: 1px solid var(--border);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 500;
+  animation: slideInRight 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.routePanelExiting {
+  animation: slideOutRight 0.3s cubic-bezier(0.55, 0.09, 0.68, 0.53) forwards;
+}
+
+.routeBar.routePanelExiting {
+  animation: slideDownBar 0.3s cubic-bezier(0.55, 0.09, 0.68, 0.53) forwards;
+}
+
+@keyframes slideDownBar {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.routePanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.routePanelHeader h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.routePanelActions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.routePanelToggle {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.routePanelToggle:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
+.routePanelClose {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.routePanelClose:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
+.routeDestination {
+  font-size: 0.95rem;
+  color: var(--accent);
+  font-weight: 500;
+  margin: 0;
+}
+
+.routeStats {
+  display: flex;
+  gap: 1rem;
+}
+
+.routeStat {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(63, 185, 80, 0.1);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.routeStatValue {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.routeStatLabel {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.routeLoading,
+.routeError {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.routeError {
+  color: var(--danger);
+}
+
+.routeNavBtn {
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.routeNavBtn:hover {
+  background: var(--accent-hover);
+}
+
+.routeNavHint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Compact bar (collapsed) */
+.routeBar {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: rgba(22, 27, 34, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: slideUpBar 0.3s ease-out forwards;
+}
+
+@keyframes slideUpBar {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.routeBarFullscreen {
+  bottom: 24px;
+  padding: 0.6rem 1.25rem;
+}
+
+.routeBarContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.routeBarStat {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.routeBarText {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.routeBarNavBtn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.routeBarNavBtn:hover {
+  background: var(--accent-hover);
+}
+
+.routeBarToggle,
+.routeBarClose {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.2s, background 0.2s;
+}
+
+.routeBarToggle:hover,
+.routeBarClose:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
+/* Fullscreen panel */
+.routePanelFullscreen {
+  width: min(300px, 90%);
+  max-height: 80%;
+}
+
 .mapWrap {
   flex: 1;
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--border);
   min-height: 300px;
+  position: relative;
+  background: var(--bg-card);
+}
+
+.mapWrap:fullscreen,
+.mapWrap:-webkit-full-screen {
+  border-radius: 0;
+  border: none;
+}
+
+.mapWrap:fullscreen .fullscreenBtn,
+.mapWrap:-webkit-full-screen .fullscreenBtn {
+  bottom: 20px;
+  right: 20px;
+}
+
+.mapWrap:fullscreen .routePanel,
+.mapWrap:-webkit-full-screen .routePanel {
+  top: 16px;
+  right: 16px;
+  bottom: auto;
+  max-height: calc(100vh - 100px);
+  border-radius: var(--radius);
+}
+
+.mapWrap:fullscreen .routeBar,
+.mapWrap:-webkit-full-screen .routeBar {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.fullscreenBtn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.fullscreenBtn:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
 }
 
 .map {
@@ -81,6 +413,24 @@
 
 .map :global(.leaflet-control-attribution) {
   display: none;
+}
+
+.deviceError {
+  padding: 1.5rem;
+  background: rgba(248, 81, 73, 0.15);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  color: var(--danger);
+}
+
+.deviceError p {
+  margin: 0 0 0.5rem;
+}
+
+.deviceError p:last-child {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
 .loadingOverlay {
@@ -121,4 +471,35 @@
 
 .popupBtn:hover {
   background: var(--accent-hover);
+}
+
+.popupLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.popupLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.routeDestinationLink {
+  color: var(--accent);
+}
+
+.routeDestinationLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.routeBarLink {
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.routeBarLink:hover {
+  color: var(--accent-hover);
+  text-decoration: none;
 }

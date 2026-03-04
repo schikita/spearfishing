@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthLayout from '../components/AuthLayout';
 import styles from './Login.module.css';
 
 export default function Login() {
@@ -33,35 +34,40 @@ export default function Login() {
   };
 
   return (
-    <div className={styles.wrap}>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <h1>Вход</h1>
-        {error && <div className={styles.error}>{error}</div>}
-        <label>
-          Email
-          <input
+    <AuthLayout>
+      <div className={styles.wrap}>
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <h1>Вход</h1>
+          {error && <div className={styles.error}>{error}</div>}
+          <label>
+            Email
+            <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
             placeholder="admin@example.com"
-          />
-        </label>
-        <label>
-          Пароль
-          <input
+            />
+          </label>
+          <label>
+            Пароль
+            <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-          />
-        </label>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Вход…' : 'Войти'}
-        </button>
-      </form>
-    </div>
+            />
+          </label>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Вход…' : 'Войти'}
+          </button>
+          <p className={styles.footer}>
+            Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+          </p>
+        </form>
+      </div>
+    </AuthLayout>
   );
 }

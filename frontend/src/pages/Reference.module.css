@@ -31,13 +31,13 @@
   display: block;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  color: var(--text-muted);
+  color: #fff;
 }
 
 .sidebar a:hover,
 .sidebar a.active {
-  color: var(--accent);
-  background: rgba(63, 185, 80, 0.1);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
   text-decoration: none;
 }
 

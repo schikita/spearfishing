@@ -161,3 +161,39 @@
 .card:last-child {
   border-bottom: none;
 }
+
+.muted {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.authBgPreview {
+  margin-bottom: 1rem;
+}
+
+.authBgPreview img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.uploadLabel {
+  cursor: pointer;
+}
+
+.uploadBtn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.uploadBtn:hover {
+  background: var(--accent-hover);
+}

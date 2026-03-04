@@ -34,6 +34,13 @@ export const referenceSections = pgTable('reference_sections', {
   updatedAt: text('updated_at').notNull().default('now()'),
 });
 
+export const pageSettings = pgTable('page_settings', {
+  pageKey: text('page_key').primaryKey(),
+  title: text('title').notNull().default(''),
+  intro: text('intro').notNull().default(''),
+  updatedAt: text('updated_at').notNull().default('now()'),
+});
+
 export const permitOrganizations = pgTable('permit_organizations', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),

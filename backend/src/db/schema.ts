@@ -48,16 +48,27 @@ export const permitOrganizations = sqliteTable('permit_organizations', {
   createdAt: text('created_at').notNull().default('CURRENT_TIMESTAMP'),
 });
 
+export const pageSettings = sqliteTable('page_settings', {
+  pageKey: text('page_key').primaryKey(),
+  title: text('title').notNull().default(''),
+  intro: text('intro').notNull().default(''),
+  phone: text('phone'),
+  email: text('email'),
+  updatedAt: text('updated_at').notNull().default('CURRENT_TIMESTAMP'),
+});
+
 export const subscriptions = sqliteTable('subscriptions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   userId: integer('user_id').notNull(),
   paymentId: text('payment_id'),
   status: text('status').notNull().default('pending'), // pending | active | expired
   expiresAt: text('expires_at').notNull(),
+  deviceToken: text('device_token'), // привязка к устройству: один пользователь — одно устройство
   createdAt: text('created_at').notNull().default('CURRENT_TIMESTAMP'),
 });
 
 export type User = typeof users.$inferSelect;
+export type PageSetting = typeof pageSettings.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type WaterBody = typeof waterBodies.$inferSelect;
 export type ReferenceSection = typeof referenceSections.$inferSelect;

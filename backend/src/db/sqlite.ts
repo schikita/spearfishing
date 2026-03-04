@@ -11,4 +11,5 @@ const dbPath = process.env.SQLITE_PATH || path.join(__dirname, '../../data/spear
 export const sqlite = new Database(dbPath);
 export const db = drizzle(sqlite, { schema });
 export const initDb = initSqlite;
+export const pageSettings = schema.pageSettings;
 export * from './schema.js';

@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.js';
 import publicRoutes from './routes/public.js';
 import adminRoutes from './routes/admin.js';
 import subscriptionRoutes from './routes/subscription.js';
+import settingsRoutes from './routes/settings.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -19,6 +20,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api', publicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/settings', settingsRoutes);
+
+const uploadsDir = path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsDir));
 
 const staticDir = path.join(__dirname, '../public');
 app.use(express.static(staticDir));

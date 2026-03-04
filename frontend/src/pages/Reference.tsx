@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api, ReferenceSection } from '../api/client';
+import PageWithBg from '../components/PageWithBg';
 import styles from './Reference.module.css';
 
 function Markdown({ text }: { text: string }) {
@@ -17,6 +18,7 @@ export default function Reference() {
   const { slug } = useParams();
   const [sections, setSections] = useState<ReferenceSection[]>([]);
   const [current, setCurrent] = useState<ReferenceSection | null>(null);
+  const [pageInfo, setPageInfo] = useState<{ title: string; intro: string }>({ title: 'Справочная информация', intro: 'Выберите раздел слева или перейдите по ссылке с главной.' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,6 +27,13 @@ export default function Reference() {
       .then(setSections)
       .catch(() => setError('Не удалось загрузить разделы'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    api.settings.pageInfo().then((info) => {
+      const ref = info.reference;
+      if (ref) setPageInfo({ title: ref.title, intro: ref.intro });
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -39,8 +48,9 @@ export default function Reference() {
   if (error) return <div className={styles.error}>{error}</div>;
 
   return (
+    <PageWithBg pageKey="reference" blur>
     <div className={styles.wrap}>
-      <h1>Справочная информация</h1>
+      <h1>{pageInfo.title}</h1>
       <div className={styles.grid}>
         <aside className={styles.sidebar}>
           <nav>
@@ -64,10 +74,11 @@ export default function Reference() {
           ) : slug ? (
             <p>Раздел не найден.</p>
           ) : (
-            <p>Выберите раздел слева или перейдите по ссылке с главной.</p>
+            <p>{pageInfo.intro}</p>
           )}
         </article>
       </div>
     </div>
+    </PageWithBg>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   api,
+  API_BASE,
   WaterBody,
   ReferenceSection,
   PermitOrganization,
@@ -8,7 +9,7 @@ import {
 } from "../api/client";
 import styles from "./Admin.module.css";
 
-type Tab = "users" | "water" | "reference" | "permit";
+type Tab = "users" | "water" | "reference" | "permit" | "settings";
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("users");
@@ -45,7 +46,7 @@ export default function Admin() {
     <div className={styles.wrap}>
       <h1>Админ-панель</h1>
       <div className={styles.tabs}>
-        {(["users", "water", "reference", "permit"] as Tab[]).map((t) => (
+        {(["users", "water", "reference", "permit", "settings"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -56,6 +57,7 @@ export default function Admin() {
             {t === "water" && "Водоёмы"}
             {t === "reference" && "Справочник"}
             {t === "permit" && "Организации"}
+            {t === "settings" && "Настройки"}
           </button>
         ))}
       </div>
@@ -73,7 +75,430 @@ export default function Admin() {
       {!loading && tab === "permit" && (
         <AdminPermitOrgs list={orgs} onSave={load} />
       )}
+      {tab === "settings" && <AdminSettings />}
     </div>
+  );
+}
+
+const PAGE_BG_LABELS: Record<string, string> = {
+  home: "Главная",
+  map: "Карта",
+  reference: "Справочник",
+  contacts: "Разрешения",
+  info: "Справочная информация",
+};
+
+function PageInfoEdit({
+  pageKey,
+  label,
+  initialTitle,
+  initialIntro,
+  onSaved,
+  saving,
+  setSaving,
+}: {
+  pageKey: string;
+  label: string;
+  initialTitle: string;
+  initialIntro: string;
+  onSaved: () => void;
+  saving: boolean;
+  setSaving: (v: string | null) => void;
+}) {
+  const [title, setTitle] = useState(initialTitle);
+  const [intro, setIntro] = useState(initialIntro);
+  useEffect(() => {
+    setTitle(initialTitle);
+    setIntro(initialIntro);
+  }, [initialTitle, initialIntro]);
+
+  const save = async () => {
+    setSaving(pageKey);
+    try {
+      await api.admin.updatePageInfo(pageKey, { title, intro });
+      onSaved();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: "1.5rem" }}>
+      <h3 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>{label}</h3>
+      <div className={styles.formGrid} style={{ flexDirection: "column", alignItems: "stretch" }}>
+        <label>
+          Заголовок
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Заголовок страницы"
+            style={{ width: "100%", marginTop: "0.25rem" }}
+          />
+        </label>
+        <label>
+          Вступительный текст
+          <textarea
+            value={intro}
+            onChange={(e) => setIntro(e.target.value)}
+            placeholder="Вступительный текст"
+            rows={3}
+            style={{ width: "100%", marginTop: "0.25rem", resize: "vertical" }}
+          />
+        </label>
+        <button type="button" onClick={save} disabled={saving}>
+          {saving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PageInfoEditWithContacts({
+  pageKey,
+  label,
+  initialTitle,
+  initialIntro,
+  initialPhone,
+  initialEmail,
+  onSaved,
+  saving,
+  setSaving,
+}: {
+  pageKey: string;
+  label: string;
+  initialTitle: string;
+  initialIntro: string;
+  initialPhone: string;
+  initialEmail: string;
+  onSaved: () => void;
+  saving: boolean;
+  setSaving: (v: string | null) => void;
+}) {
+  const [title, setTitle] = useState(initialTitle);
+  const [intro, setIntro] = useState(initialIntro);
+  const [phone, setPhone] = useState(initialPhone);
+  const [email, setEmail] = useState(initialEmail);
+  useEffect(() => {
+    setTitle(initialTitle);
+    setIntro(initialIntro);
+    setPhone(initialPhone);
+    setEmail(initialEmail);
+  }, [initialTitle, initialIntro, initialPhone, initialEmail]);
+
+  const save = async () => {
+    setSaving(pageKey);
+    try {
+      await api.admin.updatePageInfo(pageKey, { title, intro, phone, email });
+      onSaved();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: "1.5rem" }}>
+      <h3 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>{label}</h3>
+      <div className={styles.formGrid} style={{ flexDirection: "column", alignItems: "stretch" }}>
+        <label>
+          Заголовок
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Заголовок страницы"
+            style={{ width: "100%", marginTop: "0.25rem" }}
+          />
+        </label>
+        <label>
+          Вступительный текст
+          <textarea
+            value={intro}
+            onChange={(e) => setIntro(e.target.value)}
+            placeholder="Вступительный текст"
+            rows={3}
+            style={{ width: "100%", marginTop: "0.25rem", resize: "vertical" }}
+          />
+        </label>
+        <label>
+          Телефон
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+375 29 123-45-67"
+            style={{ width: "100%", marginTop: "0.25rem" }}
+          />
+        </label>
+        <label>
+          Email
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="info@example.by"
+            style={{ width: "100%", marginTop: "0.25rem" }}
+          />
+        </label>
+        <button type="button" onClick={save} disabled={saving}>
+          {saving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AdminSettings() {
+  const [authBgUrl, setAuthBgUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [pageBgUrls, setPageBgUrls] = useState<Record<string, string | null>>({});
+  const [pageInfo, setPageInfo] = useState<Record<string, { title: string; intro: string; phone?: string; email?: string }>>({});
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [savingPageInfo, setSavingPageInfo] = useState<string | null>(null);
+
+  const loadAll = () => {
+    api.admin.authBg().then((r) => setAuthBgUrl(r.url)).catch(() => {});
+    api.admin.logo().then((r) => setLogoUrl(r.url)).catch(() => {});
+    api.admin.favicon().then((r) => setFaviconUrl(r.url)).catch(() => {});
+    Promise.all(
+      Object.keys(PAGE_BG_LABELS).map((k) =>
+        api.admin.pageBg(k).then((r) => ({ k, url: r.url }))
+      )
+    ).then((results) => {
+      const urls: Record<string, string | null> = {};
+      results.forEach(({ k, url }) => { urls[k] = url; });
+      setPageBgUrls(urls);
+    }).catch(() => {});
+    api.admin.pageInfo().then(setPageInfo).catch(() => {});
+  };
+
+  useEffect(() => {
+    loadAll();
+  }, []);
+
+  const uploadBlock = (
+    label: string,
+    key: string,
+    url: string | null,
+    onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void,
+    onDelete: () => void,
+    accept: string,
+    hint: string
+  ) => (
+    <div className={styles.section} key={key}>
+      <h2>{label}</h2>
+      <p className={styles.muted}>{hint}</p>
+      {url && (
+        <div className={styles.authBgPreview}>
+          <img src={(API_BASE || "") + url} alt={label} style={{ maxHeight: key === "favicon" ? 48 : 200 }} />
+          <button
+            type="button"
+            className={styles.danger}
+            onClick={onDelete}
+            disabled={deleting === key}
+          >
+            {deleting === key ? "Удаление…" : "Удалить"}
+          </button>
+        </div>
+      )}
+      <div className={styles.form}>
+        <label className={styles.uploadLabel}>
+          <input
+            type="file"
+            accept={accept}
+            onChange={onUpload}
+            disabled={uploading === key}
+            style={{ display: "none" }}
+          />
+          <span className={styles.uploadBtn}>
+            {uploading === key ? "Загрузка…" : url ? "Заменить" : "Загрузить"}
+          </span>
+        </label>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {uploadBlock(
+        "Фон страницы входа / регистрации",
+        "authBg",
+        authBgUrl,
+        async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setUploading("authBg");
+          try {
+            await api.admin.uploadAuthBg(file);
+            loadAll();
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Ошибка загрузки");
+          } finally {
+            setUploading(null);
+            e.target.value = "";
+          }
+        },
+        async () => {
+          if (!confirm("Удалить фон?")) return;
+          setDeleting("authBg");
+          try {
+            await api.admin.deleteAuthBg();
+            setAuthBgUrl(null);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Ошибка");
+          } finally {
+            setDeleting(null);
+          }
+        },
+        "image/jpeg,image/png,image/webp",
+        "JPG, PNG, WebP, до 5 МБ. Затемнение 50%."
+      )}
+      {uploadBlock(
+        "Логотип приложения",
+        "logo",
+        logoUrl,
+        async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setUploading("logo");
+          try {
+            await api.admin.uploadLogo(file);
+            loadAll();
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Ошибка загрузки");
+          } finally {
+            setUploading(null);
+            e.target.value = "";
+          }
+        },
+        async () => {
+          if (!confirm("Удалить логотип?")) return;
+          setDeleting("logo");
+          try {
+            await api.admin.deleteLogo();
+            setLogoUrl(null);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Ошибка");
+          } finally {
+            setDeleting(null);
+          }
+        },
+        "image/jpeg,image/png,image/webp,image/svg+xml",
+        "Слева: картинка. Справа: «Подводная охота» и «БЕЛАРУСЬ»."
+      )}
+      {uploadBlock(
+        "Фавиконка",
+        "favicon",
+        faviconUrl,
+        async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setUploading("favicon");
+          try {
+            await api.admin.uploadFavicon(file);
+            loadAll();
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Ошибка загрузки");
+          } finally {
+            setUploading(null);
+            e.target.value = "";
+          }
+        },
+        async () => {
+          if (!confirm("Удалить фавиконку?")) return;
+          setDeleting("favicon");
+          try {
+            await api.admin.deleteFavicon();
+            setFaviconUrl(null);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Ошибка");
+          } finally {
+            setDeleting(null);
+          }
+        },
+        "image/x-icon,image/png,image/svg+xml",
+        "ICO, PNG или SVG, до 512 КБ."
+      )}
+      <div className={styles.section}>
+        <h2>Фоны страниц</h2>
+        <p className={styles.muted}>
+          Загрузите фон для главной, карты, справочника и разрешений. JPG, PNG, WebP, до 5 МБ.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+          {Object.entries(PAGE_BG_LABELS).map(([key, label]) =>
+            uploadBlock(
+              label,
+              `pageBg-${key}`,
+              pageBgUrls[key] ?? null,
+              async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploading(`pageBg-${key}`);
+                try {
+                  await api.admin.uploadPageBg(key, file);
+                  loadAll();
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : "Ошибка загрузки");
+                } finally {
+                  setUploading(null);
+                  e.target.value = "";
+                }
+              },
+              async () => {
+                if (!confirm(`Удалить фон страницы «${label}»?`)) return;
+                setDeleting(`pageBg-${key}`);
+                try {
+                  await api.admin.deletePageBg(key);
+                  setPageBgUrls((prev) => ({ ...prev, [key]: null }));
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : "Ошибка");
+                } finally {
+                  setDeleting(null);
+                }
+              },
+              "image/jpeg,image/png,image/webp",
+              ""
+            )
+          )}
+        </div>
+      </div>
+      <div className={styles.section}>
+        <h2>Информация на справочных страницах</h2>
+        <p className={styles.muted}>
+          Заголовок и вступительный текст для страниц «Справочник», «Разрешения» и «Справочная информация».
+        </p>
+        {(["reference", "contacts"] as const).map((pageKey) => {
+          const info = pageInfo[pageKey] ?? { title: "", intro: "" };
+          return (
+            <PageInfoEdit
+              key={pageKey}
+              pageKey={pageKey}
+              label={PAGE_BG_LABELS[pageKey]}
+              initialTitle={info.title}
+              initialIntro={info.intro}
+              onSaved={loadAll}
+              saving={savingPageInfo === pageKey}
+              setSaving={setSavingPageInfo}
+            />
+          );
+        })}
+        <PageInfoEditWithContacts
+          pageKey="info"
+          label={PAGE_BG_LABELS.info}
+          initialTitle={pageInfo.info?.title ?? ""}
+          initialIntro={pageInfo.info?.intro ?? ""}
+          initialPhone={pageInfo.info?.phone ?? ""}
+          initialEmail={pageInfo.info?.email ?? ""}
+          onSaved={loadAll}
+          saving={savingPageInfo === "info"}
+          setSaving={setSavingPageInfo}
+        />
+      </div>
+    </>
   );
 }
 
@@ -86,10 +511,7 @@ function AdminUsers({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [allowedIp, setAllowedIp] = useState("");
   const [hasAccess, setHasAccess] = useState(false);
-  const [editingIp, setEditingIp] = useState<number | null>(null);
-  const [ipValue, setIpValue] = useState("");
 
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,23 +519,11 @@ function AdminUsers({
       await api.admin.createUser({
         email,
         password,
-        allowedIp: allowedIp || undefined,
         hasAccess,
       });
       setEmail("");
       setPassword("");
-      setAllowedIp("");
       setHasAccess(false);
-      onSave();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Ошибка");
-    }
-  };
-
-  const updateIp = async (id: number) => {
-    try {
-      await api.admin.updateUser(id, { allowedIp: ipValue });
-      setEditingIp(null);
       onSave();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Ошибка");
@@ -146,11 +556,6 @@ function AdminUsers({
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <input
-          placeholder="IP (опционально)"
-          value={allowedIp}
-          onChange={(e) => setAllowedIp(e.target.value)}
-        />
         <label>
           <input type="checkbox" checked={hasAccess} onChange={(e) => setHasAccess(e.target.checked)} />
           Доступ к карте
@@ -165,7 +570,6 @@ function AdminUsers({
             <th>Email</th>
             <th>Роль</th>
             <th>Доступ к карте</th>
-            <th>Привязанный IP</th>
             <th></th>
           </tr>
         </thead>
@@ -187,38 +591,6 @@ function AdminUsers({
                   </button>
                 ) : (
                   "—"
-                )}
-              </td>
-              <td>
-                {editingIp === u.id ? (
-                  <>
-                    <input
-                      value={ipValue}
-                      onChange={(e) => setIpValue(e.target.value)}
-                      placeholder="IP"
-                      className={styles.inputSm}
-                    />
-                    <button type="button" onClick={() => updateIp(u.id)}>
-                      Сохранить
-                    </button>
-                    <button type="button" onClick={() => setEditingIp(null)}>
-                      Отмена
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {u.allowedIp || "—"}
-                    <button
-                      type="button"
-                      className={styles.btnSm}
-                      onClick={() => {
-                        setEditingIp(u.id);
-                        setIpValue(u.allowedIp || "");
-                      }}
-                    >
-                      Изменить
-                    </button>
-                  </>
                 )}
               </td>
               <td>
@@ -260,6 +632,53 @@ function AdminWaterBodies({
     permitInfo: "",
   });
   const [editing, setEditing] = useState<WaterBody | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = () => {
+    setExporting(true);
+    try {
+      const features = list.map((wb) => {
+        const lat = parseFloat(wb.lat);
+        const lng = parseFloat(wb.lng);
+        let geometry: { type: string; coordinates: unknown } = { type: "Point", coordinates: [lng, lat] };
+        if (wb.geometry) {
+          try {
+            const g = JSON.parse(wb.geometry);
+            if (g.type && g.coordinates) geometry = g;
+          } catch {
+            /* use point */
+          }
+        }
+        return {
+          type: "Feature" as const,
+          properties: {
+            id: wb.id,
+            name: wb.name,
+            nameRu: wb.nameRu,
+            region: wb.region,
+            description: wb.description,
+            permitInfo: wb.permitInfo,
+          },
+          geometry,
+        };
+      });
+      const geojson = {
+        type: "FeatureCollection" as const,
+        features,
+      };
+      const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "water-bodies.geojson";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Ошибка экспорта");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,5 +1,5 @@
 .wrap {
-  max-width: 420px;
+  max-width: 520px;
   margin: 2rem auto;
   padding: 2rem;
   background: var(--bg-card);
@@ -12,10 +12,72 @@
   margin-bottom: 1rem;
 }
 
+.wrap h2 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.75rem;
+}
+
 .desc {
   color: var(--text-muted);
   margin-bottom: 1.5rem;
   line-height: 1.5;
+}
+
+.plans {
+  margin-bottom: 1rem;
+}
+
+.planGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.planCard {
+  padding: 1rem;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.planCard:hover {
+  border-color: var(--accent);
+}
+
+.planSelected {
+  border-color: var(--accent);
+  background: rgba(63, 185, 80, 0.08);
+}
+
+.planAmount {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #a8e6a1;
+}
+
+.planLabel {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.rules {
+  margin-bottom: 1.5rem;
+}
+
+.rules ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.rules li {
+  margin-bottom: 0.5rem;
 }
 
 .price {
@@ -32,6 +94,15 @@
 
 .period {
   color: var(--text-muted);
+}
+
+.back {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.back a {
+  color: var(--accent);
 }
 
 .btn {

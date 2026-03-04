@@ -8,9 +8,13 @@ const router = Router();
 
 const SHOP_ID = process.env.YOOKASSA_SHOP_ID || '';
 const SECRET_KEY = process.env.YOOKASSA_SECRET_KEY || '';
-const SUBSCRIPTION_DAYS = 365;
-const SUBSCRIPTION_AMOUNT = process.env.SUBSCRIPTION_AMOUNT || '9.99';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+export const SUBSCRIPTION_PLANS = [
+  { id: '1d', days: 1, amount: '5', label: '1 день', currency: 'BYN' as const },
+  { id: '1m', days: 30, amount: '30', label: '1 месяц', currency: 'BYN' as const },
+  { id: '3m', days: 90, amount: '60', label: '3 месяца', currency: 'BYN' as const },
+];
 
 function getYooKassa() {
   if (!SHOP_ID || !SECRET_KEY) {
@@ -19,26 +23,35 @@ function getYooKassa() {
   return new YooKassa({ shopId: SHOP_ID, secretKey: SECRET_KEY });
 }
 
+/** Список тарифов */
+router.get('/plans', (_req, res) => {
+  res.json({ plans: SUBSCRIPTION_PLANS });
+});
+
 /** Создать платёж для подписки */
 router.post('/create', requireAuth, async (req, res) => {
   const user = req.user!;
   if (user.role === 'admin') {
     return res.status(400).json({ error: 'Админ не нуждается в подписке' });
   }
+  const { planId } = req.body;
+  const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId) || SUBSCRIPTION_PLANS[1];
+  const amount = plan.amount;
+  const days = plan.days;
 
   try {
     const yk = getYooKassa();
     const returnUrl = `${FRONTEND_URL}/subscription/success`;
     const payment = await yk.createPayment({
-      amount: { value: SUBSCRIPTION_AMOUNT, currency: 'RUB' },
+      amount: { value: amount, currency: plan.currency },
       payment_method_data: { type: 'bank_card' },
       confirmation: { type: 'redirect', return_url: returnUrl },
-      description: `Подписка на карту водоёмов — ${user.email}`,
-      metadata: { user_id: String(user.id) },
+      description: `Подписка на карту водоёмов (${plan.label}) — ${user.email}`,
+      metadata: { user_id: String(user.id), plan_id: plan.id },
     });
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + SUBSCRIPTION_DAYS);
+    expiresAt.setDate(expiresAt.getDate() + days);
 
     await db.insert(subscriptions).values({
       userId: user.id,
@@ -82,7 +95,7 @@ router.post('/webhook', async (req, res) => {
 
     if (sub && sub.status === 'pending') {
       await db.update(subscriptions).set({ status: 'active' }).where(eq(subscriptions.id, sub.id));
-      await db.update(users).set({ hasAccess: 1 }).where(eq(users.id, userId));
+      // Не ставим users.hasAccess — доступ идёт через подписку с привязкой к устройству
     }
   } catch (err) {
     console.error('Webhook error:', err);
@@ -90,7 +103,7 @@ router.post('/webhook', async (req, res) => {
   res.status(200).send('ok');
 });
 
-/** Статус подписки пользователя */
+/** Статус подписки пользователя (подписка привязана к аккаунту по email) */
 router.get('/status', requireAuth, async (req, res) => {
   const user = req.user!;
   if (user.role === 'admin') {
@@ -105,10 +118,12 @@ router.get('/status', requireAuth, async (req, res) => {
     .limit(1);
 
   const now = new Date().toISOString().slice(0, 10);
-  const hasAccess = user.hasAccess === 1 || (sub && sub.status === 'active' && sub.expiresAt >= now);
+  const subActive = sub && sub.status === 'active' && sub.expiresAt >= now;
+  const hasAccessByAdmin = user.hasAccess === 1;
+  const hasAccessBySub = !!subActive;
 
   res.json({
-    hasAccess: !!hasAccess,
+    hasAccess: !!hasAccessByAdmin || !!hasAccessBySub,
     expiresAt: sub?.expiresAt ?? null,
     status: sub?.status ?? null,
   });

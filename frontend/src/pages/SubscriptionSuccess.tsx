@@ -5,7 +5,7 @@ import { api } from '../api/client';
 import styles from './Subscription.module.css';
 
 export default function SubscriptionSuccess() {
-  const { user, loadUser } = useAuth();
+  const { loadUser } = useAuth();
   const [ready, setReady] = useState(false);
   const navigate = useNavigate();
 

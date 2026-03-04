@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import PageWithBg from '../components/PageWithBg';
 import styles from './Home.module.css';
 
 export default function Home() {
   return (
+    <PageWithBg pageKey="home" blur>
     <div className={styles.home}>
       <section className={styles.hero}>
         <h1>Подводная охота в Беларуси</h1>
@@ -30,5 +32,6 @@ export default function Home() {
         </Link>
       </section>
     </div>
+    </PageWithBg>
   );
 }

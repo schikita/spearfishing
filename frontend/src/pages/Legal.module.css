@@ -1,0 +1,45 @@
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+}
+
+.wrap h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.updated {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.wrap section {
+  margin-bottom: 1.5rem;
+}
+
+.wrap h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.wrap p,
+.wrap li {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.wrap ul {
+  margin: 0.5rem 0 0 1.25rem;
+}
+
+.wrap a {
+  color: var(--accent);
+}
+
+.wrap a:hover {
+  text-decoration: underline;
+}

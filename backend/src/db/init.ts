@@ -70,15 +70,46 @@ export function initDb(): void {
     /* column already exists */
   }
   db.exec(`
+    CREATE TABLE IF NOT EXISTS page_settings (
+      page_key TEXT PRIMARY KEY,
+      title TEXT NOT NULL DEFAULT '',
+      intro TEXT NOT NULL DEFAULT '',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO page_settings (page_key, title, intro) VALUES
+      ('reference', 'Справочная информация', 'Выберите раздел слева или перейдите по ссылке с главной.'),
+      ('contacts', 'Организации, выдающие разрешения', 'Контактная информация для получения путёвок на подводную охоту. Актуальные перечни водоёмов и условия — на сайтах организаций.');
+  `);
+  db.exec(`
     CREATE TABLE IF NOT EXISTS subscriptions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
       payment_id TEXT,
       status TEXT NOT NULL DEFAULT 'pending',
       expires_at TEXT NOT NULL,
+      device_token TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+  `);
+  try {
+    db.exec('ALTER TABLE subscriptions ADD COLUMN device_token TEXT');
+  } catch {
+    /* column already exists */
+  }
+  try {
+    db.exec('ALTER TABLE page_settings ADD COLUMN phone TEXT');
+  } catch {
+    /* column already exists */
+  }
+  try {
+    db.exec('ALTER TABLE page_settings ADD COLUMN email TEXT');
+  } catch {
+    /* column already exists */
+  }
+  db.exec(`
+    INSERT OR IGNORE INTO page_settings (page_key, title, intro) VALUES
+      ('info', 'Справочная информация', 'Контактная информация проекта «Подводная охота в Беларуси».');
   `);
 
   const adminCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };

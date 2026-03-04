@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import styles from './Subscription.module.css';
 
+type Plan = { id: string; days: number; amount: string; label: string; currency: string };
+
 export default function Subscription() {
   const { user, loading: authLoading } = useAuth();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string>('1m');
   const [status, setStatus] = useState<{ hasAccess: boolean; expiresAt: string | null } | null>(null);
   const [payLoading, setPayLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    api.subscription.plans().then((r) => setPlans(r.plans)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -27,7 +35,7 @@ export default function Subscription() {
     setError('');
     setPayLoading(true);
     try {
-      const { paymentUrl } = await api.subscription.create();
+      const { paymentUrl } = await api.subscription.create(selectedPlan);
       window.location.href = paymentUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка создания платежа');
@@ -63,19 +71,43 @@ export default function Subscription() {
       <h1>Подписка на карту водоёмов</h1>
       <p className={styles.desc}>
         Карта содержит актуальный перечень водоёмов Беларуси, где разрешена подводная охота, с контурами и
-        возможностью построения маршрута.
+        возможностью построения маршрута от вашего местоположения.
       </p>
-      <div className={styles.price}>
-        <span className={styles.amount}>9,99 ₽</span>
-        <span className={styles.period}>в год</span>
-      </div>
+
+      <section className={styles.plans}>
+        <h2>Тарифы</h2>
+        <div className={styles.planGrid}>
+          {plans.map((plan) => (
+            <button
+              key={plan.id}
+              type="button"
+              className={`${styles.planCard} ${selectedPlan === plan.id ? styles.planSelected : ''}`}
+              onClick={() => setSelectedPlan(plan.id)}
+            >
+              <span className={styles.planAmount}>{plan.amount} {plan.currency}</span>
+              <span className={styles.planLabel}>{plan.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.rules}>
+        <h2>Особенности подписки</h2>
+        <ul>
+          <li><strong>Подписка привязана к аккаунту.</strong> Доступ к карте предоставляется по email — войдите в свой аккаунт с любого устройства.</li>
+          <li>Один аккаунт — одна подписка. Используйте карту с любого устройства, где вы авторизованы.</li>
+        </ul>
+      </section>
+
       {error && <div className={styles.error}>{error}</div>}
       <button type="button" className={styles.btn} onClick={handlePay} disabled={payLoading}>
-        {payLoading ? 'Создание платежа…' : 'Оформить подписку'}
+        {payLoading ? 'Создание платежа…' : `Оплатить ${plans.find((p) => p.id === selectedPlan)?.amount || ''} ${plans.find((p) => p.id === selectedPlan)?.currency || 'BYN'}`}
       </button>
       <p className={styles.note}>
-        После оплаты доступ к карте активируется автоматически. Оплата через ЮKassa (банковские карты, ЮMoney и
-        др.).
+        После оплаты доступ к карте активируется автоматически. Оплата через ЮKassa (банковские карты).
+      </p>
+      <p className={styles.back}>
+        <Link to="/">← На главную</Link>
       </p>
     </div>
   );
