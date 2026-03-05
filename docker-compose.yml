@@ -10,7 +10,9 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-mfe-2hD-Zj7-3EL}
     volumes:
       - app-data:/app/data
+      - uploads-data:/app/uploads
     restart: unless-stopped
 
 volumes:
   app-data:
+  uploads-data:

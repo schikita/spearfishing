@@ -17,7 +17,8 @@
     "scripts:convert-to-polygon": "tsx scripts/convert-all-to-polygon.ts",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "docker:seed-waterbodies": "docker compose run --rm -v \"$(pwd):/project:ro\" -e SQLITE_PATH=/app/data/spearfishing.db -e WATERBODIES_GEOJSON=\"/project/brest_waterbodies.geojson,/project/minsk_waterbodies.geojson,/project/grodno_waterbodies.geojson,/project/vitebsk_waterbodies.geojson,/project/mogilev_waterbodies.geojson,/project/gomel_waterbodies.geojson\" app node dist/db/seed-waterbodies.js"
   },
   "dependencies": {
     "serverless-http": "^3.2.0"
