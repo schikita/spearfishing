@@ -82,9 +82,27 @@
 }
 
 .cardIcon {
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: 14px;
+  color: var(--accent);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.card:hover .cardIcon {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  transform: scale(1.05);
+}
+
+.cardIconSvg {
   display: block;
-  margin-bottom: 0.5rem;
+  width: 32px;
+  height: 32px;
 }
 
 .card h2 {

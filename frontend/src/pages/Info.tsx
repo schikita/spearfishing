@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
+import SeoHead from '../components/SeoHead';
 import styles from './Info.module.css';
 
 export default function Info() {
@@ -23,6 +24,11 @@ export default function Info() {
 
   return (
     <PageWithBg pageKey="info" blur>
+    <SeoHead
+      title="Справочная информация"
+      description="Контактная информация проекта «Подводная охота в Беларуси». Телефон и email для связи."
+      path="info"
+    />
       <div className={styles.wrap}>
         <h1>{pageInfo.title}</h1>
         <p className={styles.intro}>{pageInfo.intro}</p>

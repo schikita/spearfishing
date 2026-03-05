@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api, ReferenceSection } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
+import SeoHead from '../components/SeoHead';
 import styles from './Reference.module.css';
 
 function Markdown({ text }: { text: string }) {
@@ -47,8 +48,18 @@ export default function Reference() {
   if (loading) return <div className={styles.loading}>Загрузка…</div>;
   if (error) return <div className={styles.error}>{error}</div>;
 
+  const pageTitle = current ? (current.titleRu || current.title) : pageInfo.title;
+  const pageDesc = current && current.content
+    ? (current.content.slice(0, 160).replace(/\n/g, ' ') + '…')
+    : pageInfo.intro;
+
   return (
     <PageWithBg pageKey="reference" blur>
+    <SeoHead
+      title={pageTitle}
+      description={pageDesc}
+      path={slug ? `reference/${slug}` : 'reference'}
+    />
     <div className={styles.wrap}>
       <h1>{pageInfo.title}</h1>
       <div className={styles.grid}>

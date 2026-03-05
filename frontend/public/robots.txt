@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /admin
+Disallow: /subscription
+Disallow: /subscription/success
+
+Sitemap: https://spearfishing.by/sitemap.xml

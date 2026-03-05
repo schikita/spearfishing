@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { api, API_BASE } from '../api/client';
 import Logo from './Logo';
 import CookieConsent from './CookieConsent';
+import SeoHead from './SeoHead';
 import styles from './Layout.module.css';
 
 export default function Layout() {
@@ -30,6 +31,10 @@ export default function Layout() {
 
   return (
     <div className={styles.layout}>
+      <SeoHead
+        path={location.pathname}
+        noIndex={['/login', '/register', '/admin', '/subscription', '/subscription/success'].includes(location.pathname) || location.pathname.startsWith('/admin/')}
+      />
       <header className={styles.header}>
         <Logo onClick={closeMenu} />
         <button
@@ -64,10 +69,7 @@ export default function Layout() {
               <button type="button" onClick={() => { logout(); closeMenu(); }} className={styles.logout}>Выход</button>
             </>
           ) : (
-            <>
-              <Link to="/login" onClick={closeMenu}>Вход</Link>
-              <Link to="/register" onClick={closeMenu}>Регистрация</Link>
-            </>
+            <Link to="/login" onClick={closeMenu}>Вход</Link>
           )}
         </nav>
       </header>

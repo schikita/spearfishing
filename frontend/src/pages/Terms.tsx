@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom';
+import SeoHead from '../components/SeoHead';
 import styles from './Legal.module.css';
 
 export default function Terms() {
   return (
     <div className={styles.wrap}>
+      <SeoHead
+        title="Пользовательское соглашение"
+        description="Пользовательское соглашение сайта «Подводная охота в Беларуси». Условия использования сервиса."
+        path="terms"
+      />
       <h1>Пользовательское соглашение</h1>
       <p className={styles.updated}>Последнее обновление: февраль 2025 г.</p>
 

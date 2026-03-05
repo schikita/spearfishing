@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, PermitOrganization } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
+import SeoHead from '../components/SeoHead';
 import styles from './Contacts.module.css';
 
 export default function Contacts() {
@@ -28,6 +29,11 @@ export default function Contacts() {
 
   return (
     <PageWithBg pageKey="contacts" blur>
+    <SeoHead
+      title={pageInfo.title}
+      description="Организации, выдающие разрешения на подводную охоту в Беларуси. БООР и другие. Контакты для получения путёвок."
+      path="contacts"
+    />
     <div className={styles.wrap}>
       <h1>{pageInfo.title}</h1>
       <p className={styles.intro}>{pageInfo.intro}</p>

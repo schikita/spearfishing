@@ -6,6 +6,7 @@ import buffer from '@turf/buffer';
 import { lineString } from '@turf/helpers';
 import { api, WaterBody } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
+import SeoHead from '../components/SeoHead';
 import styles from './MapPage.module.css';
 
 // LineString → Polygon через буфер (реки отображаются как полигоны)
@@ -210,6 +211,11 @@ export default function MapPage() {
 
   return (
     <PageWithBg pageKey="map">
+    <SeoHead
+      title="Карта водоёмов"
+      description="Интерактивная карта водоёмов Беларуси, где разрешена подводная охота. Построение маршрута от вашего местоположения."
+      path="map"
+    />
     <div className={styles.wrap} style={{ position: 'relative' }}>
       <h1>Карта водоёмов</h1>
       <p className={styles.subtitle}>

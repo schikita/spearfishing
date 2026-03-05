@@ -1,8 +1,14 @@
+import SeoHead from '../components/SeoHead';
 import styles from './Legal.module.css';
 
 export default function Privacy() {
   return (
     <div className={styles.wrap}>
+      <SeoHead
+        title="Политика конфиденциальности"
+        description="Политика конфиденциальности сайта «Подводная охота в Беларуси». Обработка персональных данных, хранение паролей, cookies."
+        path="privacy"
+      />
       <h1>Политика конфиденциальности</h1>
       <p className={styles.updated}>Последнее обновление: февраль 2025 г.</p>
 

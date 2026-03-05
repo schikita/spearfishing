@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api, WaterBody } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
+import SeoHead from '../components/SeoHead';
 import styles from './WaterBodyPage.module.css';
 
 export default function WaterBodyPage() {
@@ -38,6 +39,11 @@ export default function WaterBodyPage() {
 
   return (
     <PageWithBg pageKey="map" blur>
+      <SeoHead
+        title={wb.nameRu || wb.name}
+        description={wb.description || `${wb.nameRu || wb.name} — ${wb.region}. ${wb.permitInfo || 'Разрешена подводная охота.'}`}
+        path={`water/${wb.id}`}
+      />
       <div className={styles.wrap}>
         <Link to="/map" className={styles.backLink}>← На карту</Link>
         <h1>{wb.nameRu || wb.name}</h1>
