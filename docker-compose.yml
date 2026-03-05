@@ -2,12 +2,12 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "3003:3003"
     environment:
       - PORT=3000
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@spearfishing.by}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-mfe-2hD-Zj7-3EL}
     volumes:
       - app-data:/app/data
     restart: unless-stopped
