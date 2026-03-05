@@ -20,7 +20,8 @@ function getYooKassa() {
   if (!SHOP_ID || !SECRET_KEY) {
     throw new Error('YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY должны быть заданы в .env');
   }
-  return new YooKassa({ shopId: SHOP_ID, secretKey: SECRET_KEY });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new (YooKassa as any)({ shopId: SHOP_ID, secretKey: SECRET_KEY });
 }
 
 /** Список тарифов */
@@ -48,7 +49,7 @@ router.post('/create', requireAuth, async (req, res) => {
       confirmation: { type: 'redirect', return_url: returnUrl },
       description: `Подписка на карту водоёмов (${plan.label}) — ${user.email}`,
       metadata: { user_id: String(user.id), plan_id: plan.id },
-    });
+    }) as { id: string; confirmationUrl?: string };
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + days);
@@ -60,7 +61,7 @@ router.post('/create', requireAuth, async (req, res) => {
       expiresAt: expiresAt.toISOString().slice(0, 10),
     });
 
-    const url = (payment as { confirmationUrl?: string }).confirmationUrl;
+    const url = payment.confirmationUrl;
     if (!url) {
       return res.status(500).json({ error: 'Не получен URL оплаты' });
     }

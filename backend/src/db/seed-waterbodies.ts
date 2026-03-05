@@ -30,25 +30,33 @@ interface GeoFeature {
 
 function getCentroid(geom: GeoFeature['geometry']): [number, number] | null {
   if (!geom || !geom.coordinates) return null;
-  const c = geom.coordinates;
+  const c = geom.coordinates as unknown;
   if (geom.type === 'Point' && Array.isArray(c)) {
-    if (c.length >= 2 && typeof c[0] === 'number') return [c[0] as number, c[1] as number];
-    if (c[0] && Array.isArray(c[0]) && c[0].length >= 2) return [c[0][0], c[0][1]];
+    if (c.length >= 2 && typeof (c as number[])[0] === 'number') {
+      const p = c as number[];
+      return [p[0], p[1]];
+    }
+    const p0 = (c as unknown[])[0];
+    if (Array.isArray(p0) && p0.length >= 2) return [Number(p0[0]), Number(p0[1])];
   }
   if (geom.type === 'LineString' && Array.isArray(c) && c.length) {
     const pts = c as number[][];
     const mid = Math.floor(pts.length / 2);
-    return [pts[mid][0], pts[mid][1]];
+    const p = pts[mid];
+    if (Array.isArray(p) && p.length >= 2) return [p[0], p[1]];
   }
-  if (geom.type === 'Polygon' && Array.isArray(c) && c[0]?.length) {
-    return [c[0][0][0], c[0][0][1]];
-  }
-  if (geom.type === 'MultiPolygon' && Array.isArray(c) && c[0]) {
-    const firstPoly = c[0] as number[][][];
-    const firstRing = firstPoly?.[0];
-    if (firstRing?.[0] && Array.isArray(firstRing[0]) && firstRing[0].length >= 2) {
-      return [firstRing[0][0], firstRing[0][1]];
+  if (geom.type === 'Polygon' && Array.isArray(c) && (c as unknown[])[0]) {
+    const ring = (c as number[][])[0];
+    if (Array.isArray(ring) && ring[0] && Array.isArray(ring[0])) {
+      const first = ring[0] as number[];
+      return [first[0], first[1]];
     }
+  }
+  if (geom.type === 'MultiPolygon' && Array.isArray(c) && (c as unknown[])[0]) {
+    const firstPoly = (c as number[][][])[0];
+    const firstRing = firstPoly?.[0];
+    const first = firstRing?.[0];
+    if (Array.isArray(first) && first.length >= 2) return [first[0], first[1]];
   }
   return null;
 }
