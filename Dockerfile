@@ -6,13 +6,20 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: backend + static
+# Stage 2: build backend (нужен tsc из devDependencies)
+FROM node:20-alpine AS backend-build
+WORKDIR /app
+COPY backend/package*.json ./
+RUN npm ci
+COPY backend/ ./
+RUN npm run build
+
+# Stage 3: production
 FROM node:20-alpine
 WORKDIR /app
 COPY backend/package*.json ./
 RUN npm ci --omit=dev
-COPY backend/ ./
-RUN npm run build
+COPY --from=backend-build /app/dist ./dist
 COPY --from=frontend /app/frontend/dist ./public
 ENV NODE_ENV=production
 EXPOSE 3000
