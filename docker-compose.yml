@@ -2,9 +2,9 @@ services:
   app:
     build: .
     ports:
-      - "3003:3003"
+      - "3005:3005"
     environment:
-      - PORT=3003
+      - PORT=3005
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@spearfishing.by}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-mfe-2hD-Zj7-3EL}
