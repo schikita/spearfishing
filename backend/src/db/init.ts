@@ -108,8 +108,12 @@ export function initDb(): void {
     /* column already exists */
   }
   db.exec(`
-    INSERT OR IGNORE INTO page_settings (page_key, title, intro) VALUES
-      ('info', 'Справочная информация', 'Контактная информация проекта «Подводная охота в Беларуси».');
+    INSERT OR IGNORE INTO page_settings (page_key, title, intro, phone, email) VALUES
+      ('info', 'Справочная информация', 'Контактная информация проекта «Подводная охота в Беларуси».', '+375295450978', 'spearfishing125@gmail.com');
+  `);
+  db.exec(`
+    UPDATE page_settings SET phone = '+375295450978', email = 'spearfishing125@gmail.com'
+    WHERE page_key = 'info' AND (phone IS NULL OR phone = '');
   `);
 
   const adminCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
