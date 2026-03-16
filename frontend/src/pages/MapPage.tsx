@@ -129,7 +129,19 @@ export default function MapPage() {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-      () => setGeoError('Не удалось определить местоположение. Разрешите доступ к геолокации.'),
+      (err) => {
+        const msg =
+          err.code === 1
+            ? 'Доступ к геолокации запрещён. Разрешите в настройках браузера.'
+            : err.code === 2
+              ? 'Местоположение недоступно. Проверьте GPS/Wi‑Fi.'
+              : err.code === 3
+                ? 'Превышено время ожидания. Попробуйте ещё раз.'
+                : !window.isSecureContext
+                  ? 'Геолокация работает только по HTTPS. Откройте сайт по защищённому адресу (https://).'
+                  : 'Не удалось определить местоположение. Разрешите доступ к геолокации.';
+        setGeoError(msg);
+      },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }, []);
