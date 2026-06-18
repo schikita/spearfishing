@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { api, API_BASE } from '../api/client';
 import Logo from './Logo';
 import CookieConsent from './CookieConsent';
-import SeoHead from './SeoHead';
+import { Helmet } from 'react-helmet-async';
 import styles from './Layout.module.css';
 
 export default function Layout() {
@@ -29,12 +29,17 @@ export default function Layout() {
     }).catch(() => {});
   }, []);
 
+  const noIndex =
+    ['/login', '/register', '/admin', '/subscription', '/subscription/success'].includes(location.pathname) ||
+    location.pathname.startsWith('/admin/');
+
   return (
     <div className={styles.layout}>
-      <SeoHead
-        path={location.pathname}
-        noIndex={['/login', '/register', '/admin', '/subscription', '/subscription/success'].includes(location.pathname) || location.pathname.startsWith('/admin/')}
-      />
+      {noIndex && (
+        <Helmet>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+      )}
       <header className={styles.header}>
         <Logo onClick={closeMenu} />
         <button
@@ -50,14 +55,7 @@ export default function Layout() {
         </button>
         <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`}>
           <Link to="/" className={location.pathname === '/' ? styles.active : ''} onClick={closeMenu}>Главная</Link>
-          {user && (user.role === 'admin' || user.hasAccess) && (
-            <Link to="/map" className={location.pathname === '/map' ? styles.active : ''} onClick={closeMenu}>Карта</Link>
-          )}
-          {user && user.role !== 'admin' && !user.hasAccess && (
-            <Link to="/subscription" className={location.pathname === '/subscription' ? styles.active : ''} onClick={closeMenu}>
-              Подписка
-            </Link>
-          )}
+          <Link to="/map" className={location.pathname === '/map' || location.pathname.startsWith('/water/') ? styles.active : ''} onClick={closeMenu}>Карта</Link>
           <Link to="/reference" className={location.pathname.startsWith('/reference') ? styles.active : ''} onClick={closeMenu}>Справочник</Link>
           <Link to="/contacts" className={location.pathname === '/contacts' ? styles.active : ''} onClick={closeMenu}>Разрешения</Link>
           <Link to="/info" className={location.pathname === '/info' ? styles.active : ''} onClick={closeMenu}>Справочная информация</Link>

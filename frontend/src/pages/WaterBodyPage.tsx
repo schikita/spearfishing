@@ -43,6 +43,16 @@ export default function WaterBodyPage() {
         title={wb.nameRu || wb.name}
         description={wb.description || `${wb.nameRu || wb.name} — ${wb.region}. ${wb.permitInfo || 'Разрешена подводная охота.'}`}
         path={`water/${wb.id}`}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Place',
+          name: wb.nameRu || wb.name,
+          description: wb.description || `${wb.nameRu || wb.name} — ${wb.region}`,
+          address: { '@type': 'PostalAddress', addressRegion: wb.region, addressCountry: 'BY' },
+          ...(Number.isFinite(parseFloat(wb.lat)) && Number.isFinite(parseFloat(wb.lng))
+            ? { geo: { '@type': 'GeoCoordinates', latitude: parseFloat(wb.lat), longitude: parseFloat(wb.lng) } }
+            : {}),
+        }}
       />
       <div className={styles.wrap}>
         <Link to="/map" className={styles.backLink}>← На карту</Link>

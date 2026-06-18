@@ -22,33 +22,13 @@ function ProtectedAdmin() {
   return <Admin />;
 }
 
-function ProtectedMap() {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="page-loading">Загрузка…</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== 'admin' && !user.hasAccess) {
-    return <Navigate to="/subscription" replace />;
-  }
-  return <MapPage />;
-}
-
-function ProtectedWaterBody() {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="page-loading">Загрузка…</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== 'admin' && !user.hasAccess) {
-    return <Navigate to="/subscription" replace />;
-  }
-  return <WaterBodyPage />;
-}
-
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
-        <Route path="map" element={<ProtectedMap />} />
-        <Route path="water/:id" element={<ProtectedWaterBody />} />
+        <Route path="map" element={<MapPage />} />
+        <Route path="water/:id" element={<WaterBodyPage />} />
         <Route path="reference" element={<Reference />} />
         <Route path="reference/:slug" element={<Reference />} />
         <Route path="contacts" element={<Contacts />} />

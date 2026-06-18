@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
+import { SITE_URL } from '../config';
 import styles from './Home.module.css';
 
 const MapIcon = () => (
@@ -30,7 +31,15 @@ export default function Home() {
     <SeoHead
       title="Подводная охота в Беларуси"
       description="Справочник разрешённых водоёмов для подводной охоты в Беларуси. Карта водоёмов, правила, экипировка и контакты организаций для получения путёвок."
-      path="/"
+      path=""
+      jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Подводная охота — Беларусь',
+        url: SITE_URL,
+        description: 'Справочник разрешённых водоёмов для подводной охоты в Беларуси',
+        inLanguage: 'ru-BY',
+      }}
     />
     <div className={styles.home}>
       <section className={styles.hero}>
