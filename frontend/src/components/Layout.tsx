@@ -6,6 +6,7 @@ import { api, API_BASE } from '../api/client';
 import Logo from './Logo';
 import CookieConsent from './CookieConsent';
 import YandexMetrika from './YandexMetrika';
+import GoogleAnalytics from './GoogleAnalytics';
 import { Helmet } from 'react-helmet-async';
 import styles from './Layout.module.css';
 
@@ -95,6 +96,7 @@ export default function Layout() {
       </footer>
       <CookieConsent />
       <YandexMetrika />
+      <GoogleAnalytics />
     </div>
   );
 }

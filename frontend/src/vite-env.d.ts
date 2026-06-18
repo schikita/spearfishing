@@ -14,4 +14,6 @@ declare module '*.module.css' {
 
 interface Window {
   ym?: (id: number, action: string, ...args: unknown[]) => void;
+  dataLayer?: unknown[];
+  gtag?: (...args: unknown[]) => void;
 }
