@@ -31,6 +31,9 @@ export default function SeoHead({ title, description, path = '', noIndex, jsonLd
       <meta property="og:locale" content="ru_BY" />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:image" content={OG_IMAGE} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:type" content="image/png" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={fullDescription} />

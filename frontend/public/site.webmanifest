@@ -1,0 +1,22 @@
+{
+  "name": "Подводная охота — Беларусь",
+  "short_name": "Подводная охота",
+  "description": "Справочник водоёмов, карта и правила подводной охоты в Беларуси",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c4a6e",
+  "theme_color": "#0369a1",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/favicon-48x48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

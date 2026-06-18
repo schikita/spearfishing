@@ -7,7 +7,7 @@ export const SITE_URL = (process.env.SITE_URL || 'https://spearfishing.by').repl
 export const SITE_NAME = 'Подводная охота — Беларусь';
 export const DEFAULT_DESCRIPTION =
   'Подводная охота в Беларуси — справочник водоёмов, карта, правила и контакты организаций';
-export const OG_IMAGE = `${SITE_URL}/og-image.svg`;
+export const OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 const NO_INDEX_PREFIXES = ['/login', '/register', '/admin', '/subscription'];
 
@@ -162,6 +162,9 @@ function buildHeadTags(seo: SeoData): string {
     <meta property="og:locale" content="ru_BY" />
     <meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />
     <meta property="og:image" content="${OG_IMAGE}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(title)}" />
     <meta name="twitter:description" content="${escapeHtml(seo.description)}" />
