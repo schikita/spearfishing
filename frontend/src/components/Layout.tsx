@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { api, API_BASE } from '../api/client';
 import Logo from './Logo';
 import CookieConsent from './CookieConsent';
+import YandexMetrika from './YandexMetrika';
 import { Helmet } from 'react-helmet-async';
 import styles from './Layout.module.css';
 
@@ -93,6 +94,7 @@ export default function Layout() {
         </div>
       </footer>
       <CookieConsent />
+      <YandexMetrika />
     </div>
   );
 }
