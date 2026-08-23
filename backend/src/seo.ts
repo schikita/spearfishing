@@ -77,6 +77,17 @@ function isNoIndex(pathname: string): boolean {
   return NO_INDEX_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/** Paths that the SPA router handles (unknown paths should return HTTP 404). */
+export function isValidAppRoute(pathname: string): boolean {
+  if (STATIC_PAGES[pathname]) return true;
+  if (isNoIndex(pathname)) return true;
+  if (pathname === '/subscription/success') return true;
+  if (/^\/water\/\d+$/.test(pathname)) return true;
+  if (/^\/reference\/[^/]+$/.test(pathname)) return true;
+  if (/^\/blog\/[^/]+$/.test(pathname)) return true;
+  return false;
+}
+
 export async function resolveSeo(pathname: string): Promise<SeoData | null> {
   if (isNoIndex(pathname)) {
     return { title: SITE_NAME, description: DEFAULT_DESCRIPTION, path: pathname.slice(1), noIndex: true };

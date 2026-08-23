@@ -8,7 +8,7 @@ import publicRoutes from './routes/public.js';
 import adminRoutes from './routes/admin.js';
 import subscriptionRoutes from './routes/subscription.js';
 import settingsRoutes from './routes/settings.js';
-import { SITE_URL, injectSeo, loadIndexHtml, resolveSeo } from './seo.js';
+import { SITE_URL, injectSeo, isValidAppRoute, loadIndexHtml, resolveSeo } from './seo.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -133,18 +133,31 @@ ${urls
 
 app.use(express.static(staticDir));
 
+function sendNotFound(res: express.Response): void {
+  res
+    .status(404)
+    .type('html')
+    .send(
+      '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>404 — страница не найдена</title></head><body><h1>404</h1><p>Страница не найдена.</p><p><a href="/">На главную</a></p></body></html>'
+    );
+}
+
 app.get('*', async (req, res, next) => {
   if (req.path.includes('.')) return next();
+  if (!isValidAppRoute(req.path)) {
+    sendNotFound(res);
+    return;
+  }
   try {
     const seo = await resolveSeo(req.path);
     if (!seo) {
-      res.sendFile(path.join(staticDir, 'index.html'));
+      sendNotFound(res);
       return;
     }
     const html = await loadIndexHtml(staticDir);
     res.type('html').send(injectSeo(html, seo));
   } catch {
-    res.sendFile(path.join(staticDir, 'index.html'));
+    sendNotFound(res);
   }
 });
 
