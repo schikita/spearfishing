@@ -4,7 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { db, users, waterBodies, referenceSections, permitOrganizations, pageSettings } from '../db/index.js';
+import { db, users, waterBodies, referenceSections, permitOrganizations, pageSettings, blogPosts } from '../db/index.js';
 import { eq, asc } from 'drizzle-orm';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { getAuthBgUrl, getLogoUrl, getFaviconUrl, getPageBgUrl } from './settings.js';
@@ -198,6 +198,48 @@ router.delete('/reference/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// Blog posts CRUD
+router.get('/blog', async (_req, res) => {
+  const list = await db.select().from(blogPosts).orderBy(asc(blogPosts.orderIndex), asc(blogPosts.id));
+  res.json(list);
+});
+
+router.post('/blog', async (req, res) => {
+  const { slug, title, titleRu, excerpt, content, orderIndex } = req.body;
+  if (!slug || !title || content === undefined) {
+    return res.status(400).json({ error: 'Обязательны: slug, title, content' });
+  }
+  const [row] = await db.insert(blogPosts).values({
+    slug: String(slug),
+    title: String(title),
+    titleRu: titleRu ? String(titleRu) : null,
+    excerpt: excerpt ? String(excerpt) : null,
+    content: String(content),
+    orderIndex: orderIndex != null ? Number(orderIndex) : 0,
+    updatedAt: new Date().toISOString(),
+  }).returning({ id: blogPosts.id });
+  res.status(201).json(row);
+});
+
+router.patch('/blog/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { slug, title, titleRu, excerpt, content, orderIndex } = req.body;
+  const updates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  if (slug !== undefined) updates.slug = String(slug);
+  if (title !== undefined) updates.title = String(title);
+  if (titleRu !== undefined) updates.titleRu = titleRu ? String(titleRu) : null;
+  if (excerpt !== undefined) updates.excerpt = excerpt ? String(excerpt) : null;
+  if (content !== undefined) updates.content = String(content);
+  if (orderIndex !== undefined) updates.orderIndex = Number(orderIndex);
+  await db.update(blogPosts).set(updates).where(eq(blogPosts.id, id));
+  res.json({ ok: true });
+});
+
+router.delete('/blog/:id', async (req, res) => {
+  await db.delete(blogPosts).where(eq(blogPosts.id, Number(req.params.id)));
+  res.json({ ok: true });
+});
+
 // Permit organizations CRUD
 router.get('/permit-organizations', async (_req, res) => {
   const list = await db.select().from(permitOrganizations).orderBy(asc(permitOrganizations.orderIndex), asc(permitOrganizations.id));
@@ -296,7 +338,7 @@ router.delete('/settings/favicon', (_req, res) => {
 });
 
 // Фоны страниц
-const PAGE_KEYS = ['home', 'map', 'reference', 'contacts', 'info'];
+const PAGE_KEYS = ['home', 'map', 'reference', 'contacts', 'info', 'blog'];
 
 function createPageBgStorage(prefix: string) {
   return multer.diskStorage({
@@ -350,7 +392,7 @@ router.get('/settings/page-info', async (_req, res) => {
 
 router.patch('/settings/page-info/:pageKey', async (req, res) => {
   const pageKey = req.params.pageKey;
-  if (!['reference', 'contacts', 'info'].includes(pageKey)) {
+  if (!['reference', 'contacts', 'info', 'blog'].includes(pageKey)) {
     return res.status(400).json({ error: 'Недопустимая страница' });
   }
   const { title, intro, phone, email } = req.body;

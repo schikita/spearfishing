@@ -25,6 +25,13 @@ const PhoneIcon = () => (
   </svg>
 );
 
+const BlogIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 48 48" fill="none" className={styles.cardIconSvg}>
+    <path d="M10 12h28v28H10z" stroke="currentColor" strokeWidth="2" fill="none" rx="3" />
+    <path d="M16 20h16M16 26h16M16 32h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
 export default function Home() {
   return (
     <PageWithBg pageKey="home" blur>
@@ -47,7 +54,7 @@ export default function Home() {
         <p>Справочник разрешённых водоёмов, правила и контакты организаций для получения разрешений</p>
         <div className={styles.cta}>
           <Link to="/map" className={styles.primary}>Открыть карту водоёмов</Link>
-          <Link to="/reference" className={styles.secondary}>Справочная информация</Link>
+          <Link to="/blog" className={styles.secondary}>Читать блог</Link>
         </div>
       </section>
       <section className={styles.cards}>
@@ -55,6 +62,11 @@ export default function Home() {
           <span className={styles.cardIcon}><MapIcon /></span>
           <h2>Карта</h2>
           <p>Водоёмы, где разрешена подводная охота, построение маршрута от вашего местоположения</p>
+        </Link>
+        <Link to="/blog" className={styles.card}>
+          <span className={styles.cardIcon}><BlogIcon /></span>
+          <h2>Блог</h2>
+          <p>Правила, путёвки, экипировка и советы по подводной охоте в Беларуси</p>
         </Link>
         <Link to="/reference" className={styles.card}>
           <span className={styles.cardIcon}><ReferenceIcon /></span>

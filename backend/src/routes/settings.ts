@@ -36,7 +36,7 @@ export function getFaviconUrl(): string | null {
 }
 
 export function getPageBgUrl(pageKey: string): string | null {
-  const allowed = ['home', 'map', 'reference', 'contacts', 'info'];
+  const allowed = ['home', 'map', 'reference', 'contacts', 'info', 'blog'];
   if (!allowed.includes(pageKey)) return null;
   return findFile(`${pageKey}-bg`);
 }

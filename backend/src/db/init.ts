@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { mkdirSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { BLOG_ARTICLES } from './blog-articles.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '../../data');
@@ -44,6 +45,17 @@ export function initDb(): void {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS blog_posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      title_ru TEXT,
+      excerpt TEXT,
+      content TEXT NOT NULL,
+      order_index INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
     CREATE TABLE IF NOT EXISTS permit_organizations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -78,7 +90,8 @@ export function initDb(): void {
     );
     INSERT OR IGNORE INTO page_settings (page_key, title, intro) VALUES
       ('reference', 'Справочная информация', 'Выберите раздел слева или перейдите по ссылке с главной.'),
-      ('contacts', 'Организации, выдающие разрешения', 'Контактная информация для получения путёвок на подводную охоту. Актуальные перечни водоёмов и условия — на сайтах организаций.');
+      ('contacts', 'Организации, выдающие разрешения', 'Контактная информация для получения путёвок на подводную охоту. Актуальные перечни водоёмов и условия — на сайтах организаций.'),
+      ('blog', 'Блог о подводной охоте', 'Познавательные статьи о подводной охоте в Беларуси: правила, экипировка, водоёмы и безопасность.');
   `);
   db.exec(`
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -134,5 +147,13 @@ export function initDb(): void {
       ('Водохранилище (пример)', 'Водохранилище (пример)', 'Гомельская', '52.4345', '30.9754', 'Уточняйте перечень в БООР.', 'Путёвка БООР', 2)`).run();
     console.log('DB seeded. Admin:', email);
   }
+
+  const insertBlog = db.prepare(
+    'INSERT OR IGNORE INTO blog_posts (slug, title, title_ru, excerpt, content, order_index) VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  for (const a of BLOG_ARTICLES) {
+    insertBlog.run(a.slug, a.title, a.titleRu, a.excerpt, a.content, a.orderIndex);
+  }
+
   db.close();
 }

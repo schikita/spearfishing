@@ -14,6 +14,7 @@ import Admin from './pages/Admin';
 import Subscription from './pages/Subscription';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import WaterBodyPage from './pages/WaterBodyPage';
+import Blog from './pages/Blog';
 
 function ProtectedAdmin() {
   const { user, loading } = useAuth();
@@ -31,6 +32,8 @@ function AppRoutes() {
         <Route path="water/:id" element={<WaterBodyPage />} />
         <Route path="reference" element={<Reference />} />
         <Route path="reference/:slug" element={<Reference />} />
+        <Route path="blog" element={<Blog />} />
+        <Route path="blog/:slug" element={<Blog />} />
         <Route path="contacts" element={<Contacts />} />
         <Route path="info" element={<Info />} />
         <Route path="privacy" element={<Privacy />} />

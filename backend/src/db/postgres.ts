@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import bcrypt from 'bcryptjs';
 import * as schema from './schema-pg.js';
+import { BLOG_ARTICLES } from './blog-articles.js';
 
 export * from './schema-pg.js';
 
@@ -43,6 +44,17 @@ export async function initDb(): Promise<void> {
         created_at TEXT NOT NULL DEFAULT now()::text,
         updated_at TEXT NOT NULL DEFAULT now()::text
       );
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id SERIAL PRIMARY KEY,
+        slug TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        title_ru TEXT,
+        excerpt TEXT,
+        content TEXT NOT NULL,
+        order_index INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT now()::text,
+        updated_at TEXT NOT NULL DEFAULT now()::text
+      );
       CREATE TABLE IF NOT EXISTS permit_organizations (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -55,8 +67,21 @@ export async function initDb(): Promise<void> {
         order_index INTEGER DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT now()::text
       );
+      CREATE TABLE IF NOT EXISTS page_settings (
+        page_key TEXT PRIMARY KEY,
+        title TEXT NOT NULL DEFAULT '',
+        intro TEXT NOT NULL DEFAULT '',
+        phone TEXT,
+        email TEXT,
+        updated_at TEXT NOT NULL DEFAULT now()::text
+      );
       CREATE INDEX IF NOT EXISTS idx_water_bodies_region ON water_bodies(region);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    `);
+    await client.query(`
+      INSERT INTO page_settings (page_key, title, intro) VALUES
+      ('blog', 'Блог о подводной охоте', 'Познавательные статьи о подводной охоте в Беларуси: правила, экипировка, водоёмы и безопасность.')
+      ON CONFLICT (page_key) DO NOTHING
     `);
     const r = await client.query('SELECT COUNT(*)::int as c FROM users');
     if (r.rows[0].c === 0) {
@@ -84,6 +109,14 @@ export async function initDb(): Promise<void> {
         ('Водохранилище (пример)', 'Водохранилище (пример)', 'Гомельская', '52.4345', '30.9754', 'Уточняйте перечень в БООР.', 'Путёвка БООР', 2)
       `);
       console.log('DB seeded. Admin:', email);
+    }
+    for (const a of BLOG_ARTICLES) {
+      await client.query(
+        `INSERT INTO blog_posts (slug, title, title_ru, excerpt, content, order_index)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (slug) DO NOTHING`,
+        [a.slug, a.title, a.titleRu, a.excerpt, a.content, a.orderIndex]
+      );
     }
   } finally {
     client.release();

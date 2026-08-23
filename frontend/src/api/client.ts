@@ -44,6 +44,8 @@ export const api = {
   },
   waterBodies: () => request<WaterBody[]>('/water-bodies'),
   waterBodyById: (id: number) => request<WaterBody>(`/water-bodies/${id}`),
+  blog: () => request<BlogPost[]>('/blog'),
+  blogBySlug: (slug: string) => request<BlogPost>(`/blog/${slug}`),
   subscription: {
     plans: () => request<{ plans: { id: string; days: number; amount: string; label: string; currency: string }[] }>('/subscription/plans'),
     create: (planId: string) =>
@@ -90,6 +92,13 @@ export const api = {
       request<{ ok: boolean }>(`/admin/reference/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     deleteReference: (id: number) =>
       request<{ ok: boolean }>(`/admin/reference/${id}`, { method: 'DELETE' }),
+    blog: () => request<BlogPost[]>('/admin/blog'),
+    createBlog: (body: { slug: string; title: string; titleRu?: string; excerpt?: string; content: string; orderIndex?: number }) =>
+      request<{ id: number }>('/admin/blog', { method: 'POST', body: JSON.stringify(body) }),
+    updateBlog: (id: number, body: Partial<BlogPost>) =>
+      request<{ ok: boolean }>(`/admin/blog/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    deleteBlog: (id: number) =>
+      request<{ ok: boolean }>(`/admin/blog/${id}`, { method: 'DELETE' }),
     permitOrganizations: () => request<PermitOrganization[]>('/admin/permit-organizations'),
     createPermitOrg: (body: Partial<PermitOrganization>) =>
       request<{ id: number }>('/admin/permit-organizations', { method: 'POST', body: JSON.stringify(body) }),
@@ -188,6 +197,18 @@ export interface ReferenceSection {
   slug: string;
   title: string;
   titleRu: string | null;
+  content: string;
+  orderIndex: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BlogPost {
+  id: number;
+  slug: string;
+  title: string;
+  titleRu: string | null;
+  excerpt: string | null;
   content: string;
   orderIndex: number | null;
   createdAt?: string;

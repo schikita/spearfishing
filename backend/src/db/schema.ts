@@ -35,6 +35,18 @@ export const referenceSections = sqliteTable('reference_sections', {
   updatedAt: text('updated_at').notNull().default('CURRENT_TIMESTAMP'),
 });
 
+export const blogPosts = sqliteTable('blog_posts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  titleRu: text('title_ru'),
+  excerpt: text('excerpt'),
+  content: text('content').notNull(),
+  orderIndex: integer('order_index').default(0),
+  createdAt: text('created_at').notNull().default('CURRENT_TIMESTAMP'),
+  updatedAt: text('updated_at').notNull().default('CURRENT_TIMESTAMP'),
+});
+
 export const permitOrganizations = sqliteTable('permit_organizations', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
@@ -72,4 +84,5 @@ export type PageSetting = typeof pageSettings.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type WaterBody = typeof waterBodies.$inferSelect;
 export type ReferenceSection = typeof referenceSections.$inferSelect;
+export type BlogPost = typeof blogPosts.$inferSelect;
 export type PermitOrganization = typeof permitOrganizations.$inferSelect;

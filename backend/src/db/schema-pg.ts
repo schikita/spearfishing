@@ -34,6 +34,18 @@ export const referenceSections = pgTable('reference_sections', {
   updatedAt: text('updated_at').notNull().default('now()'),
 });
 
+export const blogPosts = pgTable('blog_posts', {
+  id: serial('id').primaryKey(),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  titleRu: text('title_ru'),
+  excerpt: text('excerpt'),
+  content: text('content').notNull(),
+  orderIndex: integer('order_index').default(0),
+  createdAt: text('created_at').notNull().default('now()'),
+  updatedAt: text('updated_at').notNull().default('now()'),
+});
+
 export const pageSettings = pgTable('page_settings', {
   pageKey: text('page_key').primaryKey(),
   title: text('title').notNull().default(''),

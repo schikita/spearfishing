@@ -58,6 +58,7 @@ export default function Layout() {
         <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`}>
           <Link to="/" className={location.pathname === '/' ? styles.active : ''} onClick={closeMenu}>Главная</Link>
           <Link to="/map" className={location.pathname === '/map' || location.pathname.startsWith('/water/') ? styles.active : ''} onClick={closeMenu}>Карта</Link>
+          <Link to="/blog" className={location.pathname.startsWith('/blog') ? styles.active : ''} onClick={closeMenu}>Блог</Link>
           <Link to="/reference" className={location.pathname.startsWith('/reference') ? styles.active : ''} onClick={closeMenu}>Справочник</Link>
           <Link to="/contacts" className={location.pathname === '/contacts' ? styles.active : ''} onClick={closeMenu}>Разрешения</Link>
           <Link to="/info" className={location.pathname === '/info' ? styles.active : ''} onClick={closeMenu}>Справочная информация</Link>
@@ -77,7 +78,7 @@ export default function Layout() {
         className={`${styles.main} ${
           location.pathname === '/login' || location.pathname === '/register' ? styles.mainAuth : ''
         } ${
-          ['/', '/map', '/contacts', '/info'].includes(location.pathname) || location.pathname.startsWith('/reference') || location.pathname.startsWith('/water')
+          ['/', '/map', '/contacts', '/info', '/blog'].includes(location.pathname) || location.pathname.startsWith('/reference') || location.pathname.startsWith('/water') || location.pathname.startsWith('/blog')
             ? styles.mainPageBg
             : ''
         }`}
@@ -88,6 +89,7 @@ export default function Layout() {
         <div className={styles.footerMain}>
           <span>Справочник разрешённых водоёмов для подводной охоты в Беларуси</span>
           <nav className={styles.footerNav}>
+            <Link to="/blog">Блог</Link>
             <Link to="/info">Справочная информация</Link>
             <Link to="/privacy">Политика конфиденциальности</Link>
             <Link to="/terms">Пользовательское соглашение</Link>

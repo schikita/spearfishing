@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { db, waterBodies, referenceSections } from './db/index.js';
+import { db, waterBodies, referenceSections, blogPosts } from './db/index.js';
 import { eq } from 'drizzle-orm';
 
 export const SITE_URL = (process.env.SITE_URL || 'https://spearfishing.by').replace(/\/$/, '');
@@ -25,6 +25,11 @@ const STATIC_PAGES: Record<string, { title: string; description: string }> = {
   '/reference': {
     title: 'Справочная информация',
     description: 'Экипировка, правила и полезная информация для подводной охоты в Беларуси.',
+  },
+  '/blog': {
+    title: 'Блог о подводной охоте в Беларуси',
+    description:
+      'Статьи о подводной охоте в Беларуси: правила, путёвки, экипировка, карта водоёмов, безопасность и советы новичкам.',
   },
   '/contacts': {
     title: 'Организации, выдающие разрешения',
@@ -136,6 +141,33 @@ export async function resolveSeo(pathname: string): Promise<SeoData | null> {
       title,
       description,
       path: `reference/${slug}`,
+      bodyHtml: `<article><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p></article>`,
+    };
+  }
+
+  const blogMatch = pathname.match(/^\/blog\/([^/]+)$/);
+  if (blogMatch) {
+    const slug = blogMatch[1];
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
+    if (!post) return null;
+    const title = post.titleRu || post.title;
+    const description =
+      post.excerpt ||
+      post.content.slice(0, 160).replace(/\s+/g, ' ').trim() + '…';
+    return {
+      title,
+      description,
+      path: `blog/${slug}`,
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title,
+        description,
+        inLanguage: 'ru-BY',
+        author: { '@type': 'Organization', name: SITE_NAME },
+        publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        mainEntityOfPage: `${SITE_URL}/blog/${slug}`,
+      },
       bodyHtml: `<article><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p></article>`,
     };
   }

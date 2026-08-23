@@ -31,15 +31,23 @@ const staticDir = path.join(__dirname, '../public');
 // Dynamic sitemap (before static files so it is not shadowed by a stale sitemap.xml)
 app.get('/sitemap.xml', async (_req, res) => {
   try {
-    const { db, waterBodies, referenceSections } = await import('./db/index.js');
+    const { db, waterBodies, referenceSections, blogPosts } = await import('./db/index.js');
     const { asc } = await import('drizzle-orm');
     const base = SITE_URL;
     const waters = await db.select({ id: waterBodies.id, createdAt: waterBodies.createdAt }).from(waterBodies).orderBy(asc(waterBodies.id));
     const refs = await db.select({ slug: referenceSections.slug, updatedAt: referenceSections.updatedAt }).from(referenceSections).orderBy(asc(referenceSections.orderIndex));
+    const posts = await db.select({ slug: blogPosts.slug, updatedAt: blogPosts.updatedAt }).from(blogPosts).orderBy(asc(blogPosts.orderIndex));
     const today = new Date().toISOString().slice(0, 10);
     const urls = [
       { loc: base, priority: '1.0', changefreq: 'weekly', lastmod: today },
       { loc: `${base}/map`, priority: '0.9', changefreq: 'weekly', lastmod: today },
+      { loc: `${base}/blog`, priority: '0.9', changefreq: 'weekly', lastmod: today },
+      ...posts.map((p: { slug: string; updatedAt?: string | null }) => ({
+        loc: `${base}/blog/${p.slug}`,
+        priority: '0.8',
+        changefreq: 'monthly',
+        lastmod: p.updatedAt?.slice(0, 10) || today,
+      })),
       { loc: `${base}/reference`, priority: '0.8', changefreq: 'monthly', lastmod: today },
       ...refs.map((r: { slug: string; updatedAt?: string | null }) => ({
         loc: `${base}/reference/${r.slug}`,

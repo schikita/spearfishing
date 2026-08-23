@@ -11,6 +11,7 @@ export const initDb = mod.initDb;
 export const users = mod.users as typeof schema.users;
 export const waterBodies = mod.waterBodies as typeof schema.waterBodies;
 export const referenceSections = mod.referenceSections as typeof schema.referenceSections;
+export const blogPosts = mod.blogPosts as typeof schema.blogPosts;
 export const permitOrganizations = mod.permitOrganizations as typeof schema.permitOrganizations;
 export const pageSettings = (mod as { pageSettings?: typeof schema.pageSettings }).pageSettings ?? schema.pageSettings;
 export const subscriptions = (mod as { subscriptions?: typeof schema.subscriptions }).subscriptions ?? schema.subscriptions;

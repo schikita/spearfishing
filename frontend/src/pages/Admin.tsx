@@ -4,18 +4,20 @@ import {
   API_BASE,
   WaterBody,
   ReferenceSection,
+  BlogPost,
   PermitOrganization,
   AdminUser,
 } from "../api/client";
 import styles from "./Admin.module.css";
 
-type Tab = "users" | "water" | "reference" | "permit" | "settings";
+type Tab = "users" | "water" | "reference" | "blog" | "permit" | "settings";
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("users");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [waterBodies, setWaterBodies] = useState<WaterBody[]>([]);
   const [sections, setSections] = useState<ReferenceSection[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [orgs, setOrgs] = useState<PermitOrganization[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -26,12 +28,14 @@ export default function Admin() {
       api.admin.users(),
       api.admin.waterBodies(),
       api.admin.reference(),
+      api.admin.blog(),
       api.admin.permitOrganizations(),
     ])
-      .then(([u, w, r, o]) => {
+      .then(([u, w, r, b, o]) => {
         setUsers(u);
         setWaterBodies(w);
         setSections(r);
+        setPosts(b);
         setOrgs(o);
       })
       .catch((e) => setMessage(e.message))
@@ -46,7 +50,7 @@ export default function Admin() {
     <div className={styles.wrap}>
       <h1>Админ-панель</h1>
       <div className={styles.tabs}>
-        {(["users", "water", "reference", "permit", "settings"] as Tab[]).map((t) => (
+        {(["users", "water", "reference", "blog", "permit", "settings"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -56,6 +60,7 @@ export default function Admin() {
             {t === "users" && "Пользователи"}
             {t === "water" && "Водоёмы"}
             {t === "reference" && "Справочник"}
+            {t === "blog" && "Блог"}
             {t === "permit" && "Организации"}
             {t === "settings" && "Настройки"}
           </button>
@@ -72,6 +77,9 @@ export default function Admin() {
       {!loading && tab === "reference" && (
         <AdminReference list={sections} onSave={load} />
       )}
+      {!loading && tab === "blog" && (
+        <AdminBlog list={posts} onSave={load} />
+      )}
       {!loading && tab === "permit" && (
         <AdminPermitOrgs list={orgs} onSave={load} />
       )}
@@ -84,6 +92,7 @@ const PAGE_BG_LABELS: Record<string, string> = {
   home: "Главная",
   map: "Карта",
   reference: "Справочник",
+  blog: "Блог",
   contacts: "Разрешения",
   info: "Справочная информация",
 };
@@ -471,7 +480,7 @@ function AdminSettings() {
         <p className={styles.muted}>
           Заголовок и вступительный текст для страниц «Справочник», «Разрешения» и «Справочная информация».
         </p>
-        {(["reference", "contacts"] as const).map((pageKey) => {
+        {(["reference", "blog", "contacts"] as const).map((pageKey) => {
           const info = pageInfo[pageKey] ?? { title: "", intro: "" };
           return (
             <PageInfoEdit
@@ -929,6 +938,121 @@ function AdminReference({
               className={styles.danger}
               onClick={async () => {
                 if (confirm("Удалить?")) await api.admin.deleteReference(s.id);
+                onSave();
+              }}
+            >
+              Удалить
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function AdminBlog({
+  list,
+  onSave,
+}: {
+  list: BlogPost[];
+  onSave: () => void;
+}) {
+  const [form, setForm] = useState({
+    slug: "",
+    title: "",
+    titleRu: "",
+    excerpt: "",
+    content: "",
+  });
+  const [editing, setEditing] = useState<BlogPost | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editing) {
+        await api.admin.updateBlog(editing.id, form);
+        setEditing(null);
+      } else {
+        await api.admin.createBlog(form);
+      }
+      setForm({ slug: "", title: "", titleRu: "", excerpt: "", content: "" });
+      onSave();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Ошибка");
+    }
+  };
+
+  return (
+    <div className={styles.section}>
+      <h2>{editing ? "Редактировать статью" : "Добавить статью"}</h2>
+      <form onSubmit={submit} className={styles.formGrid}>
+        <input
+          placeholder="Slug"
+          value={form.slug}
+          onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+          required
+        />
+        <input
+          placeholder="Заголовок"
+          value={form.title}
+          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+          required
+        />
+        <input
+          placeholder="Заголовок RU"
+          value={form.titleRu}
+          onChange={(e) => setForm((f) => ({ ...f, titleRu: e.target.value }))}
+        />
+        <input
+          placeholder="Краткое описание (excerpt)"
+          value={form.excerpt}
+          onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
+        />
+        <textarea
+          placeholder="Контент (Markdown)"
+          value={form.content}
+          onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+          rows={10}
+          required
+        />
+        <button type="submit">{editing ? "Сохранить" : "Добавить"}</button>
+        {editing && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditing(null);
+              setForm({ slug: "", title: "", titleRu: "", excerpt: "", content: "" });
+            }}
+          >
+            Отмена
+          </button>
+        )}
+      </form>
+      <ul className={styles.list}>
+        {list.map((s) => (
+          <li key={s.id} className={styles.card}>
+            <strong>{s.titleRu || s.title}</strong> ({s.slug})
+            <button
+              type="button"
+              className={styles.btnSm}
+              onClick={() => {
+                setEditing(s);
+                setForm({
+                  slug: s.slug,
+                  title: s.title,
+                  titleRu: s.titleRu || "",
+                  excerpt: s.excerpt || "",
+                  content: s.content,
+                });
+              }}
+            >
+              Изменить
+            </button>
+            <button
+              type="button"
+              className={styles.danger}
+              onClick={async () => {
+                if (confirm("Удалить?")) await api.admin.deleteBlog(s.id);
                 onSave();
               }}
             >
