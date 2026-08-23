@@ -56,6 +56,7 @@ export interface SeoData {
   description: string;
   path: string;
   noIndex?: boolean;
+  image?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   bodyHtml?: string;
 }
@@ -154,21 +155,24 @@ export async function resolveSeo(pathname: string): Promise<SeoData | null> {
     const description =
       post.excerpt ||
       post.content.slice(0, 160).replace(/\s+/g, ' ').trim() + '…';
+    const image = `${SITE_URL}/blog-covers/${slug}.jpg`;
     return {
       title,
       description,
       path: `blog/${slug}`,
+      image,
       jsonLd: {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: title,
         description,
+        image,
         inLanguage: 'ru-BY',
         author: { '@type': 'Organization', name: SITE_NAME },
         publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
         mainEntityOfPage: `${SITE_URL}/blog/${slug}`,
       },
-      bodyHtml: `<article><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p></article>`,
+      bodyHtml: `<article><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><img src="${escapeHtml(image)}" alt="" /></article>`,
     };
   }
 
@@ -178,6 +182,8 @@ export async function resolveSeo(pathname: string): Promise<SeoData | null> {
 function buildHeadTags(seo: SeoData): string {
   const title = fullTitle(seo.title);
   const url = seo.path ? `${SITE_URL}/${seo.path}` : SITE_URL;
+  const image = seo.image || OG_IMAGE;
+  const imageType = image.endsWith('.jpg') || image.endsWith('.jpeg') ? 'image/jpeg' : 'image/png';
   const robots = seo.noIndex ? '<meta name="robots" content="noindex, nofollow" />' : '';
   const jsonLd = seo.jsonLd
     ? `<script type="application/ld+json">${JSON.stringify(seo.jsonLd)}</script>`
@@ -193,14 +199,14 @@ function buildHeadTags(seo: SeoData): string {
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ru_BY" />
     <meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />
-    <meta property="og:image" content="${OG_IMAGE}" />
+    <meta property="og:image" content="${escapeHtml(image)}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:type" content="${imageType}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(title)}" />
     <meta name="twitter:description" content="${escapeHtml(seo.description)}" />
-    <meta name="twitter:image" content="${OG_IMAGE}" />
+    <meta name="twitter:image" content="${escapeHtml(image)}" />
     ${robots}
     ${jsonLd}
   `.trim();

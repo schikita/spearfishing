@@ -3,10 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import { api, BlogPost } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
+import { blogCoverPath, blogCoverUrl } from '../blogCovers';
 import styles from './Blog.module.css';
 
 function Markdown({ text }: { text: string }) {
   const html = text
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />')
     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
     .replace(/^# (.*$)/gim, '<h1>$1</h1>')
@@ -17,7 +19,9 @@ function Markdown({ text }: { text: string }) {
     .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
     .replace(/\n/g, '<br />')
     .replace(/<\/ul><br \/>/g, '</ul>')
-    .replace(/<br \/><ul>/g, '<ul>');
+    .replace(/<br \/><ul>/g, '<ul>')
+    .replace(/<br \/><img /g, '<img ')
+    .replace(/\/><br \/>/g, '/>');
   return <div className={styles.content} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
@@ -61,6 +65,8 @@ export default function Blog() {
   const pageDesc = current
     ? (current.excerpt || current.content.slice(0, 160).replace(/\n/g, ' ') + '…')
     : pageInfo.intro;
+  const cover = current ? blogCoverPath(current.slug) : undefined;
+  const coverAbs = current ? blogCoverUrl(current.slug) : undefined;
 
   return (
     <PageWithBg pageKey="blog" blur>
@@ -68,6 +74,7 @@ export default function Blog() {
         title={pageTitle}
         description={pageDesc}
         path={slug ? `blog/${slug}` : 'blog'}
+        image={coverAbs}
         jsonLd={
           current
             ? {
@@ -75,6 +82,7 @@ export default function Blog() {
                 '@type': 'Article',
                 headline: current.titleRu || current.title,
                 description: pageDesc,
+                image: coverAbs,
                 inLanguage: 'ru-BY',
               }
             : {
@@ -90,6 +98,16 @@ export default function Blog() {
         {current ? (
           <article className={styles.article}>
             <Link to="/blog" className={styles.back}>← Все статьи</Link>
+            <div className={styles.hero}>
+              <img
+                src={cover}
+                alt=""
+                className={styles.heroImg}
+                width={1200}
+                height={630}
+              />
+              <div className={styles.heroShade} />
+            </div>
             <h1>{current.titleRu || current.title}</h1>
             {current.excerpt && <p className={styles.lead}>{current.excerpt}</p>}
             <Markdown text={current.content} />
@@ -99,28 +117,42 @@ export default function Blog() {
             </div>
             <aside className={styles.related}>
               <h2>Читайте также</h2>
-              <ul>
+              <div className={styles.relatedGrid}>
                 {posts
                   .filter((p) => p.slug !== current.slug)
-                  .slice(0, 4)
+                  .slice(0, 3)
                   .map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/blog/${p.slug}`}>{p.titleRu || p.title}</Link>
-                    </li>
+                    <Link key={p.id} to={`/blog/${p.slug}`} className={styles.relatedCard}>
+                      <img src={blogCoverPath(p.slug)} alt="" loading="lazy" />
+                      <span>{p.titleRu || p.title}</span>
+                    </Link>
                   ))}
-              </ul>
+              </div>
             </aside>
           </article>
         ) : (
           <>
-            <h1>{pageInfo.title}</h1>
-            <p className={styles.intro}>{pageInfo.intro}</p>
-            <div className={styles.list}>
+            <header className={styles.pageHead}>
+              <h1>{pageInfo.title}</h1>
+              <p className={styles.intro}>{pageInfo.intro}</p>
+            </header>
+            <div className={styles.grid}>
               {posts.map((p) => (
                 <Link key={p.id} to={`/blog/${p.slug}`} className={styles.card}>
-                  <h2>{p.titleRu || p.title}</h2>
-                  <p>{p.excerpt || p.content.slice(0, 140).replace(/\n/g, ' ') + '…'}</p>
-                  <span className={styles.readMore}>Читать →</span>
+                  <div className={styles.cardMedia}>
+                    <img
+                      src={blogCoverPath(p.slug)}
+                      alt=""
+                      loading="lazy"
+                      width={600}
+                      height={315}
+                    />
+                  </div>
+                  <div className={styles.cardBody}>
+                    <h2>{p.titleRu || p.title}</h2>
+                    <p>{p.excerpt || p.content.slice(0, 140).replace(/\n/g, ' ') + '…'}</p>
+                    <span className={styles.readMore}>Читать статью →</span>
+                  </div>
                 </Link>
               ))}
             </div>
