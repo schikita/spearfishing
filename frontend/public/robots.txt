@@ -6,4 +6,4 @@ Disallow: /admin
 Disallow: /subscription
 Disallow: /subscription/success
 
-Sitemap: https://spearfishing.by/sitemap.xml
+Sitemap: https://spearfishing.space/sitemap.xml

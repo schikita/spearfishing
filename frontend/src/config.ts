@@ -1,4 +1,4 @@
-export const SITE_URL = (import.meta.env?.VITE_SITE_URL as string | undefined) || 'https://spearfishing.by';
+export const SITE_URL = (import.meta.env?.VITE_SITE_URL as string | undefined) || 'https://spearfishing.space';
 
 export const SITE_NAME = 'Подводная охота — Беларусь';
 export const DEFAULT_TITLE = SITE_NAME;

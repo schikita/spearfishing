@@ -3,7 +3,7 @@ import path from 'path';
 import { db, waterBodies, referenceSections, blogPosts } from './db/index.js';
 import { eq } from 'drizzle-orm';
 
-export const SITE_URL = (process.env.SITE_URL || 'https://spearfishing.by').replace(/\/$/, '');
+export const SITE_URL = (process.env.SITE_URL || 'https://spearfishing.space').replace(/\/$/, '');
 export const SITE_NAME = 'Подводная охота — Беларусь';
 export const DEFAULT_DESCRIPTION =
   'Подводная охота в Беларуси — справочник водоёмов, карта, правила и контакты организаций';
