@@ -7,6 +7,8 @@ import { lineString } from '@turf/helpers';
 import { api, WaterBody } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { breadcrumbList } from '../seo/jsonLd';
 import styles from './MapPage.module.css';
 
 // LineString → Polygon через буфер (реки отображаются как полигоны)
@@ -221,14 +223,28 @@ export default function MapPage() {
     ? [userPos, toPoint]
     : [];
 
+  const byRegion = waterBodies.reduce<Record<string, WaterBody[]>>((acc, wb) => {
+    const region = wb.region || 'Другие';
+    if (!acc[region]) acc[region] = [];
+    acc[region].push(wb);
+    return acc;
+  }, {});
+  const regionNames = Object.keys(byRegion).sort((a, b) => a.localeCompare(b, 'ru'));
+
   return (
     <PageWithBg pageKey="map">
     <SeoHead
       title="Карта водоёмов"
       description="Интерактивная карта водоёмов Беларуси, где разрешена подводная охота. Построение маршрута от вашего местоположения."
       path="map"
+      jsonLd={breadcrumbList([
+        { name: 'Главная' },
+        { name: 'Карта', path: 'map' },
+      ])}
     />
+    <div className={styles.page}>
     <div className={styles.wrap} style={{ position: 'relative' }}>
+      <Breadcrumbs items={[{ name: 'Главная', to: '/' }, { name: 'Карта' }]} />
       <h1>Карта водоёмов</h1>
       <p className={styles.subtitle}>
         Водоёмы, где разрешена подводная охота. Включите геолокацию и выберите водоём, чтобы построить маршрут.
@@ -456,6 +472,32 @@ export default function MapPage() {
         </MapContainer>
       </div>
       {loading && <div className={styles.loadingOverlay}>Загрузка водоёмов…</div>}
+    </div>
+    {!loading && regionNames.length > 0 && (
+      <section className={styles.catalog} aria-label="Список водоёмов по регионам">
+        <h2>Водоёмы по регионам</h2>
+        <p className={styles.catalogIntro}>
+          Полный перечень для индексации и быстрого перехода к карточке водоёма.
+        </p>
+        <div className={styles.catalogGrid}>
+          {regionNames.map((region) => (
+            <div key={region} className={styles.catalogRegion}>
+              <h3>{region}</h3>
+              <ul>
+                {byRegion[region]
+                  .slice()
+                  .sort((a, b) => (a.nameRu || a.name).localeCompare(b.nameRu || b.name, 'ru'))
+                  .map((wb) => (
+                    <li key={wb.id}>
+                      <Link to={`/water/${wb.id}`}>{wb.nameRu || wb.name}</Link>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
     </div>
     </PageWithBg>
   );

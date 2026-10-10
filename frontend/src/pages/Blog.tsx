@@ -3,8 +3,26 @@ import { useParams, Link } from 'react-router-dom';
 import { api, BlogPost } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
+import Breadcrumbs from '../components/Breadcrumbs';
 import { blogCoverPath, blogCoverUrl } from '../blogCovers';
+import { breadcrumbList, toIsoDate } from '../seo/jsonLd';
+import { SITE_NAME, SITE_URL } from '../config';
 import styles from './Blog.module.css';
+
+const FAQ_BY_SLUG: Record<string, { question: string; answer: string }[]> = {
+  'boor-putevki-i-kontakty': [
+    {
+      question: 'Можно ли охотиться «по чужой» путёвке?',
+      answer:
+        'Нет. Путёвка персональная (или оформляется по правилам организации) — уточняйте условия выдачи.',
+    },
+    {
+      question: 'Достаточно ли скрина с сайта?',
+      answer:
+        'Ориентир — документ/подтверждение, которое требует организация и инспекция. Лучше иметь оригинал или официальное электронное подтверждение.',
+    },
+  ],
+};
 
 function Markdown({ text }: { text: string }) {
   const html = text
@@ -67,6 +85,62 @@ export default function Blog() {
     : pageInfo.intro;
   const cover = current ? blogCoverPath(current.slug) : undefined;
   const coverAbs = current ? blogCoverUrl(current.slug) : undefined;
+  const publishedTime = current ? toIsoDate(current.createdAt) : undefined;
+  const modifiedTime = current ? toIsoDate(current.updatedAt) || publishedTime : undefined;
+  const faq = current ? FAQ_BY_SLUG[current.slug] : undefined;
+
+  const jsonLd = current
+    ? [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: current.titleRu || current.title,
+          description: pageDesc,
+          image: coverAbs,
+          inLanguage: 'ru-BY',
+          author: { '@type': 'Organization', name: SITE_NAME },
+          publisher: {
+            '@type': 'Organization',
+            name: SITE_NAME,
+            url: SITE_URL,
+            logo: { '@type': 'ImageObject', url: `${SITE_URL.replace(/\/$/, '')}/apple-touch-icon.png` },
+          },
+          mainEntityOfPage: `${SITE_URL.replace(/\/$/, '')}/blog/${current.slug}`,
+          ...(publishedTime ? { datePublished: publishedTime } : {}),
+          ...(modifiedTime ? { dateModified: modifiedTime } : {}),
+        },
+        breadcrumbList([
+          { name: 'Главная' },
+          { name: 'Блог', path: 'blog' },
+          { name: current.titleRu || current.title, path: `blog/${current.slug}` },
+        ]),
+        ...(faq
+          ? [
+              {
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: faq.map((f) => ({
+                  '@type': 'Question',
+                  name: f.question,
+                  acceptedAnswer: { '@type': 'Answer', text: f.answer },
+                })),
+              },
+            ]
+          : []),
+      ]
+    : [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Blog',
+          name: pageInfo.title,
+          description: pageInfo.intro,
+          inLanguage: 'ru-BY',
+        },
+        breadcrumbList([
+          { name: 'Главная' },
+          { name: 'Блог', path: 'blog' },
+        ]),
+      ];
 
   return (
     <PageWithBg pageKey="blog" blur>
@@ -75,28 +149,21 @@ export default function Blog() {
         description={pageDesc}
         path={slug ? `blog/${slug}` : 'blog'}
         image={coverAbs}
-        jsonLd={
-          current
-            ? {
-                '@context': 'https://schema.org',
-                '@type': 'Article',
-                headline: current.titleRu || current.title,
-                description: pageDesc,
-                image: coverAbs,
-                inLanguage: 'ru-BY',
-              }
-            : {
-                '@context': 'https://schema.org',
-                '@type': 'Blog',
-                name: pageInfo.title,
-                description: pageInfo.intro,
-                inLanguage: 'ru-BY',
-              }
-        }
+        ogType={current ? 'article' : 'website'}
+        publishedTime={publishedTime}
+        modifiedTime={modifiedTime}
+        jsonLd={jsonLd}
       />
       <div className={styles.wrap}>
         {current ? (
           <article className={styles.article}>
+            <Breadcrumbs
+              items={[
+                { name: 'Главная', to: '/' },
+                { name: 'Блог', to: '/blog' },
+                { name: current.titleRu || current.title },
+              ]}
+            />
             <Link to="/blog" className={styles.back}>← Все статьи</Link>
             <div className={styles.hero}>
               <img
@@ -132,6 +199,7 @@ export default function Blog() {
           </article>
         ) : (
           <>
+            <Breadcrumbs items={[{ name: 'Главная', to: '/' }, { name: 'Блог' }]} />
             <header className={styles.pageHead}>
               <h1>{pageInfo.title}</h1>
               <p className={styles.intro}>{pageInfo.intro}</p>

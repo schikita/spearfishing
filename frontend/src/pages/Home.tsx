@@ -1,8 +1,28 @@
 import { Link } from 'react-router-dom';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
-import { SITE_URL } from '../config';
+import { SITE_URL, SITE_NAME } from '../config';
+import { organizationLd } from '../seo/jsonLd';
 import styles from './Home.module.css';
+
+const POPULAR_POSTS = [
+  {
+    slug: 'pravila-podvodnoj-ohoty-v-belarusi',
+    title: 'Правила подводной охоты в Беларуси',
+  },
+  {
+    slug: 'kak-poluchit-razreshenie-na-podvodnuyu-ohotu',
+    title: 'Как получить путёвку',
+  },
+  {
+    slug: 'gde-razreshena-podvodnaya-ohota',
+    title: 'Где разрешена подводная охота',
+  },
+  {
+    slug: 'boor-putevki-i-kontakty',
+    title: 'БООР: путёвки и контакты',
+  },
+];
 
 const MapIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 48 48" fill="none" className={styles.cardIconSvg}>
@@ -39,14 +59,18 @@ export default function Home() {
       title="Подводная охота в Беларуси"
       description="Справочник разрешённых водоёмов для подводной охоты в Беларуси. Карта водоёмов, правила, экипировка и контакты организаций для получения путёвок."
       path=""
-      jsonLd={{
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: 'Подводная охота — Беларусь',
-        url: SITE_URL,
-        description: 'Справочник разрешённых водоёмов для подводной охоты в Беларуси',
-        inLanguage: 'ru-BY',
-      }}
+      jsonLd={[
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: SITE_NAME,
+          url: SITE_URL,
+          description: 'Справочник разрешённых водоёмов для подводной охоты в Беларуси',
+          inLanguage: 'ru-BY',
+          publisher: { '@id': `${SITE_URL.replace(/\/$/, '')}/#organization` },
+        },
+        { ...organizationLd(), '@id': `${SITE_URL.replace(/\/$/, '')}/#organization` },
+      ]}
     />
     <div className={styles.home}>
       <section className={styles.hero}>
@@ -78,6 +102,16 @@ export default function Home() {
           <h2>Разрешения</h2>
           <p>Организации, выдающие путёвки на подводную охоту (БООР и др.)</p>
         </Link>
+      </section>
+      <section className={styles.popular}>
+        <h2>Популярные статьи</h2>
+        <ul className={styles.popularList}>
+          {POPULAR_POSTS.map((p) => (
+            <li key={p.slug}>
+              <Link to={`/blog/${p.slug}`}>{p.title}</Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
     </PageWithBg>

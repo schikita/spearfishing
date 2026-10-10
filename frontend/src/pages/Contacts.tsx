@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api, PermitOrganization } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { breadcrumbList } from '../seo/jsonLd';
 import styles from './Contacts.module.css';
 
 export default function Contacts() {
@@ -33,10 +36,22 @@ export default function Contacts() {
       title={pageInfo.title}
       description="Организации, выдающие разрешения на подводную охоту в Беларуси. БООР и другие. Контакты для получения путёвок."
       path="contacts"
+      jsonLd={breadcrumbList([
+        { name: 'Главная' },
+        { name: 'Разрешения', path: 'contacts' },
+      ])}
     />
     <div className={styles.wrap}>
+      <Breadcrumbs items={[{ name: 'Главная', to: '/' }, { name: 'Разрешения' }]} />
       <h1>{pageInfo.title}</h1>
       <p className={styles.intro}>{pageInfo.intro}</p>
+      <p className={styles.relatedLinks}>
+        <Link to="/map">Карта водоёмов</Link>
+        {' · '}
+        <Link to="/blog/kak-poluchit-razreshenie-na-podvodnuyu-ohotu">Как получить путёвку</Link>
+        {' · '}
+        <Link to="/blog/boor-putevki-i-kontakty">БООР и контакты</Link>
+      </p>
       <ul className={styles.list}>
         {list.map((org) => (
           <li key={org.id} className={styles.card}>

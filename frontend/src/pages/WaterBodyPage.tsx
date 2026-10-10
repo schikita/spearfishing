@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { api, WaterBody } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { breadcrumbList } from '../seo/jsonLd';
 import styles from './WaterBodyPage.module.css';
 
 export default function WaterBodyPage() {
@@ -37,26 +39,42 @@ export default function WaterBodyPage() {
     );
   }
 
+  const name = wb.nameRu || wb.name;
+
   return (
     <PageWithBg pageKey="map" blur>
       <SeoHead
-        title={wb.nameRu || wb.name}
-        description={wb.description || `${wb.nameRu || wb.name} — ${wb.region}. ${wb.permitInfo || 'Разрешена подводная охота.'}`}
+        title={name}
+        description={wb.description || `${name} — ${wb.region}. ${wb.permitInfo || 'Разрешена подводная охота.'}`}
         path={`water/${wb.id}`}
-        jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Place',
-          name: wb.nameRu || wb.name,
-          description: wb.description || `${wb.nameRu || wb.name} — ${wb.region}`,
-          address: { '@type': 'PostalAddress', addressRegion: wb.region, addressCountry: 'BY' },
-          ...(Number.isFinite(parseFloat(wb.lat)) && Number.isFinite(parseFloat(wb.lng))
-            ? { geo: { '@type': 'GeoCoordinates', latitude: parseFloat(wb.lat), longitude: parseFloat(wb.lng) } }
-            : {}),
-        }}
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Place',
+            name,
+            description: wb.description || `${name} — ${wb.region}`,
+            address: { '@type': 'PostalAddress', addressRegion: wb.region, addressCountry: 'BY' },
+            ...(Number.isFinite(parseFloat(wb.lat)) && Number.isFinite(parseFloat(wb.lng))
+              ? { geo: { '@type': 'GeoCoordinates', latitude: parseFloat(wb.lat), longitude: parseFloat(wb.lng) } }
+              : {}),
+          },
+          breadcrumbList([
+            { name: 'Главная' },
+            { name: 'Карта', path: 'map' },
+            { name, path: `water/${wb.id}` },
+          ]),
+        ]}
       />
       <div className={styles.wrap}>
+        <Breadcrumbs
+          items={[
+            { name: 'Главная', to: '/' },
+            { name: 'Карта', to: '/map' },
+            { name },
+          ]}
+        />
         <Link to="/map" className={styles.backLink}>← На карту</Link>
-        <h1>{wb.nameRu || wb.name}</h1>
+        <h1>{name}</h1>
         <p className={styles.region}>{wb.region}</p>
         {wb.description && (
           <div className={styles.section}>

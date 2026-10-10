@@ -116,3 +116,31 @@
   color: var(--text-muted);
   line-height: 1.5;
 }
+
+.popular {
+  margin-top: 2.5rem;
+  padding: 1.5rem 0 0.5rem;
+}
+
+.popular h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.85rem;
+  color: var(--text);
+}
+
+.popularList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.popularList a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.popularList a:hover {
+  text-decoration: underline;
+}

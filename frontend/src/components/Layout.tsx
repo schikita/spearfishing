@@ -89,7 +89,10 @@ export default function Layout() {
         <div className={styles.footerMain}>
           <span>Справочник разрешённых водоёмов для подводной охоты в Беларуси</span>
           <nav className={styles.footerNav}>
+            <Link to="/map">Карта</Link>
             <Link to="/blog">Блог</Link>
+            <Link to="/reference">Справочник</Link>
+            <Link to="/contacts">Разрешения</Link>
             <Link to="/info">Справочная информация</Link>
             <Link to="/privacy">Политика конфиденциальности</Link>
             <Link to="/terms">Пользовательское соглашение</Link>

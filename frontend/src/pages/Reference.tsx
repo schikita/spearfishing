@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { api, ReferenceSection } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { breadcrumbList } from '../seo/jsonLd';
 import styles from './Reference.module.css';
 
 function Markdown({ text }: { text: string }) {
@@ -53,14 +55,38 @@ export default function Reference() {
     ? (current.content.slice(0, 160).replace(/\n/g, ' ') + '…')
     : pageInfo.intro;
 
+  const crumbs = current
+    ? [
+        { name: 'Главная', to: '/' },
+        { name: 'Справочник', to: '/reference' },
+        { name: current.titleRu || current.title },
+      ]
+    : [
+        { name: 'Главная', to: '/' },
+        { name: 'Справочник' },
+      ];
+
   return (
     <PageWithBg pageKey="reference" blur>
     <SeoHead
       title={pageTitle}
       description={pageDesc}
       path={slug ? `reference/${slug}` : 'reference'}
+      jsonLd={breadcrumbList(
+        current
+          ? [
+              { name: 'Главная' },
+              { name: 'Справочник', path: 'reference' },
+              { name: current.titleRu || current.title, path: `reference/${current.slug}` },
+            ]
+          : [
+              { name: 'Главная' },
+              { name: 'Справочник', path: 'reference' },
+            ]
+      )}
     />
     <div className={styles.wrap}>
+      <Breadcrumbs items={crumbs} />
       <h1>{pageInfo.title}</h1>
       <div className={styles.grid}>
         <aside className={styles.sidebar}>

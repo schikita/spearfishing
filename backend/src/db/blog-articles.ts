@@ -6,6 +6,8 @@ export interface BlogArticleSeed {
   excerpt: string;
   content: string;
   orderIndex: number;
+  /** Explicit FAQ for FAQPage rich results (not stored in DB). */
+  faq?: { question: string; answer: string }[];
 }
 
 export const BLOG_ARTICLES: BlogArticleSeed[] = [
@@ -387,5 +389,17 @@ export const BLOG_ARTICLES: BlogArticleSeed[] = [
 Ориентир — документ/подтверждение, которое требует организация и инспекция. Лучше иметь оригинал или официальное электронное подтверждение.
 
 Легальная охота начинается с правильного разрешения — не экономьте время на этом шаге.`,
+    faq: [
+      {
+        question: 'Можно ли охотиться «по чужой» путёвке?',
+        answer:
+          'Нет. Путёвка персональная (или оформляется по правилам организации) — уточняйте условия выдачи.',
+      },
+      {
+        question: 'Достаточно ли скрина с сайта?',
+        answer:
+          'Ориентир — документ/подтверждение, которое требует организация и инспекция. Лучше иметь оригинал или официальное электронное подтверждение.',
+      },
+    ],
   },
 ];
