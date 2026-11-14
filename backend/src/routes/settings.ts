@@ -31,8 +31,9 @@ export function getLogoUrl(): string | null {
   return findFile('logo');
 }
 
+/** Favicon = logo.png (основной бренд-значок сайта). */
 export function getFaviconUrl(): string | null {
-  return findFile('favicon');
+  return getLogoUrl() || findFile('favicon');
 }
 
 export function getPageBgUrl(pageKey: string): string | null {

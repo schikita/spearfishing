@@ -8,7 +8,7 @@ interface LogoProps {
 }
 
 export default function Logo({ onClick }: LogoProps) {
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>('/uploads/logo.png');
 
   useEffect(() => {
     api.settings.logo().then((r) => {
@@ -18,7 +18,15 @@ export default function Logo({ onClick }: LogoProps) {
 
   return (
     <Link to="/" className={styles.logo} onClick={onClick}>
-      {logoUrl && <img src={logoUrl} alt="" className={styles.logoImg} />}
+      <img
+        src={logoUrl}
+        alt=""
+        className={styles.logoImg}
+        width={44}
+        height={44}
+        decoding="async"
+        loading="eager"
+      />
       <span className={styles.logoText}>
         <span className={styles.line1}>подводная охота</span>
         <span className={styles.line2}>БЕЛАРУСЬ</span>

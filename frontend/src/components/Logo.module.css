@@ -25,13 +25,15 @@
 }
 
 .line1 {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   text-transform: lowercase;
+  color: rgba(230, 237, 243, 0.85);
 }
 
 .line2 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  color: #2dd4bf;
 }

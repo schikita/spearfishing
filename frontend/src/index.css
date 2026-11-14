@@ -1,14 +1,15 @@
 :root {
-  --bg: #0d1117;
-  --bg-card: #161b22;
-  --border: #30363d;
+  --bg: #071018;
+  --bg-card: rgba(12, 24, 38, 0.92);
+  --border: rgba(255, 255, 255, 0.1);
   --text: #e6edf3;
-  --text-muted: #8b949e;
-  --accent: #3fb950;
-  --accent-hover: #56d364;
-  --water: #0d47a1;
+  --text-muted: #94a3b8;
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-green: #22c55e;
+  --water: #0e7490;
   --danger: #f85149;
-  --radius: 12px;
+  --radius: 14px;
   --font: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 

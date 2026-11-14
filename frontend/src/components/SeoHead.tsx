@@ -33,7 +33,7 @@ export default function SeoHead({
   const cleanPath = path.replace(/^\//, '');
   const url = cleanPath ? `${SITE_URL.replace(/\/$/, '')}/${cleanPath}` : SITE_URL.replace(/\/$/, '');
   const ogImage = image || OG_IMAGE;
-  const imageType = ogImage.endsWith('.jpg') || ogImage.endsWith('.jpeg') ? 'image/jpeg' : 'image/png';
+  const imageType = ogImage.endsWith('.jpg') || ogImage.endsWith('.jpeg') ? 'image/jpeg' : ogImage.endsWith('.webp') ? 'image/webp' : 'image/png';
   const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (

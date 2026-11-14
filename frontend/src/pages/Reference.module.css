@@ -1,78 +1,406 @@
-.wrap h1 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+.page {
+  padding: 0.5rem 0 2.5rem;
+}
+
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.breadcrumbs a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  color: var(--accent);
+}
+
+.breadcrumbs span[aria-current] {
+  color: rgba(230, 237, 243, 0.85);
+}
+
+.hero {
+  position: relative;
+  padding: 2rem 1.5rem 1.75rem;
+  margin-bottom: 1.75rem;
+  border-radius: 20px;
+  border: 1px solid rgba(45, 212, 191, 0.15);
+  background: linear-gradient(
+    165deg,
+    rgba(6, 24, 38, 0.92) 0%,
+    rgba(8, 32, 48, 0.78) 50%,
+    rgba(4, 18, 28, 0.88) 100%
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.heroGlow {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120%;
+  height: 80%;
+  background: radial-gradient(ellipse, rgba(45, 212, 191, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.badge {
+  display: inline-block;
+  margin-bottom: 0.85rem;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5eead4;
+  background: rgba(45, 212, 191, 0.1);
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  border-radius: 999px;
+}
+
+.hero h1 {
+  position: relative;
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.65rem;
+  color: #f0f6fc;
+}
+
+.lead {
+  position: relative;
+  color: rgba(230, 237, 243, 0.88);
+  max-width: 640px;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 240px 1fr;
   gap: 1.5rem;
   align-items: start;
-}
-
-@media (max-width: 700px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .sidebar {
   position: sticky;
   top: 5rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 20, 32, 0.65);
+  backdrop-filter: blur(12px);
+}
+
+.sidebarTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5eead4;
+  margin-bottom: 0.75rem;
 }
 
 .sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
 .sidebar a {
   display: block;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  color: #fff;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
 }
 
-.sidebar a:hover,
-.sidebar a.active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
+.sidebar a:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
   text-decoration: none;
 }
 
-.article {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.5rem;
+.sidebar a.active {
+  color: #042f2e;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.95), rgba(34, 197, 94, 0.9));
 }
 
-.article h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
+.mainCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.article {
+  padding: 1.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(160deg, rgba(14, 28, 42, 0.92), rgba(8, 20, 32, 0.88));
+  backdrop-filter: blur(12px);
 }
 
 .content {
-  line-height: 1.65;
+  line-height: 1.7;
+  color: rgba(230, 237, 243, 0.92);
 }
 
-.content h1, .content h2, .content h3 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+.content :global(.ref-md-link) {
+  color: #2dd4bf;
+  font-weight: 500;
+  text-decoration: none;
 }
 
-.content strong {
+.content :global(.ref-md-link:hover) {
+  text-decoration: underline;
+}
+
+.content :global(.ref-md) h1 {
+  font-size: 1.35rem;
+  margin-bottom: 0.75rem;
   color: var(--text);
+}
+
+.content :global(.ref-md) h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(45, 212, 191, 0.15);
+  color: #f0f6fc;
+}
+
+.content h2:first-child {
+  margin-top: 0;
+}
+
+.content :global(.ref-md) h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.35rem 0 0.5rem;
+  color: #5eead4;
+}
+
+.content :global(.ref-md) p {
+  margin-bottom: 0.85rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.content :global(.ref-md) ol {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.content :global(.ref-md) ol li {
+  padding-left: 0;
+  list-style: decimal;
+}
+
+.content :global(.ref-md) ol li::before {
+  display: none;
+}
+
+.content :global(.ref-md) ul {
+  margin: 0.5rem 0 1rem;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.content :global(.ref-md) li {
+  position: relative;
+  padding-left: 1.25rem;
+  font-size: 0.94rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.content :global(.ref-md) li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2dd4bf;
+}
+
+.content :global(.ref-md) strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.content :global(.ref-md) a {
+  color: #2dd4bf;
+  font-weight: 500;
+}
+
+.content :global(.ref-md) a:hover {
+  text-decoration: underline;
+}
+
+.related {
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(45, 212, 191, 0.15);
+  background: rgba(45, 212, 191, 0.06);
+}
+
+.relatedTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  color: var(--text);
+}
+
+.relatedLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.relatedLinks a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.relatedLinks a:hover {
+  border-color: rgba(45, 212, 191, 0.35);
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.faq {
+  padding: 1.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(8, 20, 32, 0.6);
+  backdrop-filter: blur(10px);
+}
+
+.faqHead h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: var(--text);
+}
+
+.faqHead p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  margin-bottom: 1rem;
+}
+
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.faqItem {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.faqItem summary {
+  padding: 1rem 1.15rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--text);
+}
+
+.faqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.faqItem summary::after {
+  content: '+';
+  float: right;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #2dd4bf;
+}
+
+.faqItem[open] summary::after {
+  content: '−';
+}
+
+.faqItem p {
+  padding: 0 1.15rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.emptyIntro {
+  padding: 1.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 20, 32, 0.65);
+  color: var(--text-muted);
+  line-height: 1.6;
 }
 
 .loading,
 .error {
-  padding: 2rem;
+  padding: 3rem 2rem;
   text-align: center;
   color: var(--text-muted);
 }
 
 .error {
   color: var(--danger);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .hero {
+    padding: 1.5rem 1rem;
+  }
+
+  .article,
+  .faq {
+    padding: 1.25rem;
+  }
 }

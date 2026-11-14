@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Polygon, GeoJSON, Circle, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import buffer from '@turf/buffer';
 import { lineString } from '@turf/helpers';
 import { api, WaterBody, WinteringPit } from '../api/client';

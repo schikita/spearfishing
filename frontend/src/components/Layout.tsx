@@ -10,25 +10,61 @@ import GoogleAnalytics from './GoogleAnalytics';
 import { Helmet } from 'react-helmet-async';
 import styles from './Layout.module.css';
 
+const FOOTER_SECTIONS = [
+  {
+    title: 'Разделы',
+    links: [
+      { to: '/map', label: 'Карта водоёмов' },
+      { to: '/blog', label: 'Блог' },
+      { to: '/reference', label: 'Справочник' },
+      { to: '/contacts', label: 'Разрешения' },
+    ],
+  },
+  {
+    title: 'Справка',
+    links: [
+      { to: '/info', label: 'Справочная информация' },
+      { to: '/reference', label: 'Правила и экипировка' },
+      { to: '/blog', label: 'Статьи для новичков' },
+    ],
+  },
+  {
+    title: 'Документы',
+    links: [
+      { to: '/privacy', label: 'Политика конфиденциальности' },
+      { to: '/terms', label: 'Пользовательское соглашение' },
+    ],
+  },
+];
+
 export default function Layout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const year = new Date().getFullYear();
 
   const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
-    api.settings.favicon().then((r) => {
-      if (r.url) {
-        let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-        if (!link) {
-          link = document.createElement('link');
-          link.rel = 'icon';
-          document.head.appendChild(link);
-        }
-        link.href = (API_BASE || '') + r.url;
+    const setIcon = (rel: string, href: string, type?: string, sizes?: string) => {
+      let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]${sizes ? `[sizes="${sizes}"]` : ''}`);
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = rel;
+        if (sizes) link.sizes = sizes;
+        document.head.appendChild(link);
       }
-    }).catch(() => {});
+      link.href = href;
+      if (type) link.type = type;
+    };
+
+    api.settings.favicon().then((r) => {
+      const url = r.url ? (API_BASE || '') + r.url : '/uploads/logo.png';
+      setIcon('icon', url, 'image/png');
+      setIcon('apple-touch-icon', url, 'image/png');
+    }).catch(() => {
+      setIcon('icon', '/uploads/logo.png', 'image/png');
+    });
   }, []);
 
   const noIndex =
@@ -86,17 +122,33 @@ export default function Layout() {
         <Outlet />
       </main>
       <footer className={styles.footer}>
-        <div className={styles.footerMain}>
-          <span>Справочник разрешённых водоёмов для подводной охоты в Беларуси</span>
-          <nav className={styles.footerNav}>
-            <Link to="/map">Карта</Link>
-            <Link to="/blog">Блог</Link>
-            <Link to="/reference">Справочник</Link>
-            <Link to="/contacts">Разрешения</Link>
-            <Link to="/info">Справочная информация</Link>
-            <Link to="/privacy">Политика конфиденциальности</Link>
-            <Link to="/terms">Пользовательское соглашение</Link>
-          </nav>
+        <div className={styles.footerInner}>
+          <div className={styles.footerGrid}>
+            <div className={styles.footerBrand}>
+              <Logo />
+              <p>
+                Справочник разрешённых водоёмов, правил и контактов организаций для получения путёвок на подводную охоту в Беларуси.
+              </p>
+            </div>
+            {FOOTER_SECTIONS.map(({ title, links }) => (
+              <div key={title} className={styles.footerCol}>
+                <h3>{title}</h3>
+                <nav className={styles.footerLinks} aria-label={title}>
+                  {links.map(({ to, label }) => (
+                    <Link key={to + label} to={to}>{label}</Link>
+                  ))}
+                </nav>
+              </div>
+            ))}
+          </div>
+          <div className={styles.footerBottom}>
+            <span>© {year} Подводная охота — Беларусь</span>
+            <span>
+              <Link to="/privacy">Конфиденциальность</Link>
+              {' · '}
+              <Link to="/terms">Соглашение</Link>
+            </span>
+          </div>
         </div>
       </footer>
       <CookieConsent />

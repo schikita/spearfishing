@@ -26,7 +26,19 @@ app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/settings', settingsRoutes);
 
 const uploadsDir = path.join(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadsDir));
+app.use(
+  '/uploads',
+  express.static(uploadsDir, {
+    maxAge: '7d',
+    etag: true,
+    lastModified: true,
+    setHeaders(res, filePath) {
+      if (/\.(?:webp|avif|jpe?g|png|gif|svg|ico)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      }
+    },
+  })
+);
 
 const staticDir = path.join(__dirname, '../public');
 
@@ -45,11 +57,13 @@ function siteBaseFromRequest(req: { headers: Record<string, unknown>; protocol?:
   return SITE_URL;
 }
 
-/** W3C date for sitemap: YYYY-MM-DD only. Invalid DB values → today. */
+/** W3C date for sitemap: YYYY-MM-DD. Invalid/placeholder DB values → today. */
 function toSitemapDate(value?: string | null): string {
   const today = new Date().toISOString().slice(0, 10);
   if (!value) return today;
   const raw = String(value).trim();
+  // SQLite defaults sometimes stored literally instead of evaluated
+  if (!raw || /^CURRENT_/i.test(raw) || raw.toLowerCase() === 'null') return today;
   const isoDay = raw.match(/^(\d{4}-\d{2}-\d{2})/);
   if (isoDay) {
     const d = new Date(`${isoDay[1]}T00:00:00Z`);
@@ -133,7 +147,33 @@ ${urls
   }
 });
 
-app.use(express.static(staticDir));
+// index: false — иначе `/` отдаёт сырой index.html без SEO-инъекции (title/description/JSON-LD)
+app.use(
+  express.static(staticDir, {
+    index: false,
+    etag: true,
+    lastModified: true,
+    setHeaders(res, filePath) {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+        return;
+      }
+      if (filePath.includes(`${path.sep}assets${path.sep}`) || /[.-][A-Za-z0-9_-]{8,}\.(?:js|css)$/.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return;
+      }
+      if (filePath.includes(`${path.sep}fonts${path.sep}`)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return;
+      }
+      if (/\.(?:webp|avif|jpe?g|png|gif|svg|ico|woff2?)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+        return;
+      }
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    },
+  })
+);
 
 function sendNotFound(res: express.Response): void {
   res
