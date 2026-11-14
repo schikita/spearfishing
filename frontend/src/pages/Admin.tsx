@@ -9,8 +9,9 @@ import {
   AdminUser,
 } from "../api/client";
 import styles from "./Admin.module.css";
+import { AdminCorrections, AdminPits, AdminReports } from "./AdminModeration";
 
-type Tab = "users" | "water" | "reference" | "blog" | "permit" | "settings";
+type Tab = "users" | "water" | "reference" | "blog" | "permit" | "settings" | "pits" | "reports" | "corrections";
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("users");
@@ -50,7 +51,7 @@ export default function Admin() {
     <div className={styles.wrap}>
       <h1>Админ-панель</h1>
       <div className={styles.tabs}>
-        {(["users", "water", "reference", "blog", "permit", "settings"] as Tab[]).map((t) => (
+        {(["users", "water", "pits", "reports", "corrections", "reference", "blog", "permit", "settings"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -63,6 +64,9 @@ export default function Admin() {
             {t === "blog" && "Блог"}
             {t === "permit" && "Организации"}
             {t === "settings" && "Настройки"}
+            {t === "pits" && "Ямы"}
+            {t === "reports" && "Отчёты"}
+            {t === "corrections" && "Исправления"}
           </button>
         ))}
       </div>
@@ -84,6 +88,9 @@ export default function Admin() {
         <AdminPermitOrgs list={orgs} onSave={load} />
       )}
       {tab === "settings" && <AdminSettings />}
+      {tab === "pits" && <AdminPits />}
+      {tab === "reports" && <AdminReports />}
+      {tab === "corrections" && <AdminCorrections />}
     </div>
   );
 }
@@ -639,6 +646,8 @@ function AdminWaterBodies({
     lat: "",
     lng: "",
     permitInfo: "",
+    bodyType: "unknown",
+    roadClass: "unknown",
   });
   const [editing, setEditing] = useState<WaterBody | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -706,6 +715,8 @@ function AdminWaterBodies({
         lat: "",
         lng: "",
         permitInfo: "",
+        bodyType: "unknown",
+        roadClass: "unknown",
       });
       onSave();
     } catch (err) {
@@ -781,6 +792,21 @@ function AdminWaterBodies({
             setForm((f) => ({ ...f, permitInfo: e.target.value }))
           }
         />
+        <select value={form.bodyType} onChange={(e) => setForm((f) => ({ ...f, bodyType: e.target.value }))}>
+          <option value="unknown">тип неизвестен</option>
+          <option value="lake">озеро</option>
+          <option value="reservoir">водохранилище</option>
+          <option value="river">река</option>
+          <option value="quarry">карьер</option>
+          <option value="pond">пруд</option>
+        </select>
+        <select value={form.roadClass} onChange={(e) => setForm((f) => ({ ...f, roadClass: e.target.value }))}>
+          <option value="unknown">дорога неизвестна</option>
+          <option value="paved">асфальт</option>
+          <option value="gravel">гравий</option>
+          <option value="track">грунтовка</option>
+          <option value="field">полевая</option>
+        </select>
         <button type="submit">{editing ? "Сохранить" : "Добавить"}</button>
         {editing && (
           <button
@@ -795,6 +821,8 @@ function AdminWaterBodies({
                 lat: "",
                 lng: "",
                 permitInfo: "",
+                bodyType: "unknown",
+                roadClass: "unknown",
               });
             }}
           >
@@ -820,6 +848,8 @@ function AdminWaterBodies({
                   lat: wb.lat,
                   lng: wb.lng,
                   permitInfo: wb.permitInfo || "",
+                  bodyType: wb.bodyType || "unknown",
+                  roadClass: wb.roadClass || "unknown",
                 });
               }}
             >

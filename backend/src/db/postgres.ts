@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import bcrypt from 'bcryptjs';
 import * as schema from './schema-pg.js';
 import { BLOG_ARTICLES } from './blog-articles.js';
+import { POSTGRES_TRIP_SQL } from './trip-ddl.js';
 
 export * from './schema-pg.js';
 
@@ -78,6 +79,7 @@ export async function initDb(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_water_bodies_region ON water_bodies(region);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     `);
+    await client.query(POSTGRES_TRIP_SQL);
     await client.query(`
       INSERT INTO page_settings (page_key, title, intro) VALUES
       ('blog', 'Блог о подводной охоте', 'Познавательные статьи о подводной охоте в Беларуси: правила, экипировка, водоёмы и безопасность.')

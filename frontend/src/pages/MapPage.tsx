@@ -1,10 +1,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Polygon, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Polygon, GeoJSON, Circle, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import buffer from '@turf/buffer';
 import { lineString } from '@turf/helpers';
-import { api, WaterBody } from '../api/client';
+import { api, WaterBody, WinteringPit } from '../api/client';
+import VerdictPanel from '../components/VerdictPanel';
+import { DISCLAIMER } from '../disclaimer';
+import { nextWeekendISO } from '../tripDate';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
 import Breadcrumbs from '../components/Breadcrumbs';
@@ -59,6 +62,20 @@ const waterIcon = new L.DivIcon({
   iconAnchor: [14, 14],
 });
 
+const pitIcon = new L.DivIcon({
+  className: '',
+  html: '<span style="font-size:20px">⛔</span>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+});
+
+function turbidityColor(level?: string): string {
+  if (level === 'low') return '#16a34a';
+  if (level === 'medium') return '#ca8a04';
+  if (level === 'high') return '#92400e';
+  return '#6b7280';
+}
+
 const userIcon = new L.DivIcon({
   className: styles.markerUser,
   html: '<span>📍</span>',
@@ -99,6 +116,17 @@ export default function MapPage() {
   const [geoError, setGeoError] = useState('');
   const [routeLoading, setRouteLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [tripDate, setTripDate] = useState(nextWeekendISO);
+  const [pits, setPits] = useState<WinteringPit[]>([]);
+  const [verdictWater, setVerdictWater] = useState<WaterBody | null>(null);
+  const [regionFilter, setRegionFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [turbidityFilter, setTurbidityFilter] = useState('all');
+  const [roadFilter, setRoadFilter] = useState('all');
+  const [hidePits, setHidePits] = useState(false);
+  const [showWaters, setShowWaters] = useState(true);
+  const [showPits, setShowPits] = useState(true);
+  const [showReports, setShowReports] = useState(true);
   const mapWrapRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -120,8 +148,14 @@ export default function MapPage() {
   }, []);
 
   useEffect(() => {
-    api.waterBodies().then(setWaterBodies).finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    Promise.all([api.waterBodies(tripDate), api.winteringPits(tripDate)])
+      .then(([waters, pitData]) => {
+        setWaterBodies(waters.waterBodies);
+        setPits(pitData.pits);
+      })
+      .finally(() => setLoading(false));
+  }, [tripDate]);
 
   const requestLocation = useCallback(() => {
     setGeoError('');
@@ -223,7 +257,17 @@ export default function MapPage() {
     ? [userPos, toPoint]
     : [];
 
-  const byRegion = waterBodies.reduce<Record<string, WaterBody[]>>((acc, wb) => {
+  const allRegions = Array.from(new Set(waterBodies.map((wb) => wb.region || 'Другие'))).sort((a, b) => a.localeCompare(b, 'ru'));
+  const visibleWaters = waterBodies.filter((wb) => {
+    if (regionFilter !== 'all' && wb.region !== regionFilter) return false;
+    if (typeFilter !== 'all' && (wb.bodyType || 'unknown') !== typeFilter) return false;
+    if (turbidityFilter !== 'all' && (wb.tripHint?.turbidity || 'missing') !== turbidityFilter) return false;
+    if (roadFilter !== 'all' && (wb.tripHint?.road || 'unknown') !== roadFilter) return false;
+    if (hidePits && wb.tripHint?.hasWinteringPit) return false;
+    return true;
+  });
+
+  const byRegion = visibleWaters.reduce<Record<string, WaterBody[]>>((acc, wb) => {
     const region = wb.region || 'Другие';
     if (!acc[region]) acc[region] = [];
     acc[region].push(wb);
@@ -247,8 +291,50 @@ export default function MapPage() {
       <Breadcrumbs items={[{ name: 'Главная', to: '/' }, { name: 'Карта' }]} />
       <h1>Карта водоёмов</h1>
       <p className={styles.subtitle}>
-        Водоёмы, где разрешена подводная охота. Включите геолокацию и выберите водоём, чтобы построить маршрут.
+        Водоёмы, где разрешена подводная охота. Выберите дату и водоём: сводка покажет перечень, путёвку, ямы и погоду. Это не разрешение на охоту.
       </p>
+      <div className={styles.toolbar}>
+        <label>
+          Дата выезда{' '}
+          <input type="date" value={tripDate} onChange={(e) => setTripDate(e.target.value)} />
+        </label>
+        <select value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)} aria-label="Область">
+          <option value="all">Все области</option>
+          {allRegions.map((region) => (
+            <option key={region} value={region}>{region}</option>
+          ))}
+        </select>
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} aria-label="Тип водоёма">
+          <option value="all">Все типы</option>
+          <option value="lake">Озеро</option>
+          <option value="reservoir">Водохранилище</option>
+          <option value="river">Река</option>
+          <option value="quarry">Карьер</option>
+          <option value="pond">Пруд</option>
+          <option value="unknown">Тип не указан</option>
+        </select>
+        <select value={turbidityFilter} onChange={(e) => setTurbidityFilter(e.target.value)} aria-label="Мутность">
+          <option value="all">Любая мутность</option>
+          <option value="low">Низкая</option>
+          <option value="medium">Средняя</option>
+          <option value="high">Высокая</option>
+          <option value="missing">Нет данных</option>
+        </select>
+        <select value={roadFilter} onChange={(e) => setRoadFilter(e.target.value)} aria-label="Дорога">
+          <option value="all">Любая дорога</option>
+          <option value="ok">Проезд ок</option>
+          <option value="risky">Рискован</option>
+          <option value="only_4x4">Только внедорожник</option>
+          <option value="likely_closed">Скорее закрыто</option>
+          <option value="unknown">Нет данных</option>
+        </select>
+        <label>
+          <input type="checkbox" checked={hidePits} onChange={(e) => setHidePits(e.target.checked)} /> скрыть водоёмы с ямами
+        </label>
+        <label><input type="checkbox" checked={showWaters} onChange={(e) => setShowWaters(e.target.checked)} /> водоёмы</label>
+        <label><input type="checkbox" checked={showPits} onChange={(e) => setShowPits(e.target.checked)} /> ямы</label>
+        <label><input type="checkbox" checked={showReports} onChange={(e) => setShowReports(e.target.checked)} /> свежие отчёты</label>
+      </div>
       <div className={styles.toolbar}>
         <button type="button" onClick={requestLocation} className={styles.btn}>
           📍 Моё местоположение
@@ -334,6 +420,19 @@ export default function MapPage() {
             )}
           </>
         )}
+        <div className={styles.mapDisclaimer}>{DISCLAIMER}</div>
+        {verdictWater && (
+          <div className={styles.verdictDock}>
+            <button type="button" className={styles.routePanelClose} onClick={() => setVerdictWater(null)} aria-label="Закрыть сводку">×</button>
+            <VerdictPanel
+              waterBodyId={verdictWater.id}
+              date={tripDate}
+              lat={userPos?.[0]}
+              lng={userPos?.[1]}
+              onBuildRoute={() => buildRoute(verdictWater)}
+            />
+          </div>
+        )}
         <button
           type="button"
           className={styles.fullscreenBtn}
@@ -354,13 +453,14 @@ export default function MapPage() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {waterBodies.map((wb) => {
+          {showWaters && visibleWaters.map((wb) => {
             const geom = wb.geometry ? (() => { try { return JSON.parse(wb.geometry!); } catch { return null; } })() : null;
             const lat = parseFloat(wb.lat);
             const lng = parseFloat(wb.lng);
             const center: [number, number] = [lat, lng];
             const centerValid = Number.isFinite(lat) && Number.isFinite(lng);
-            const popupHtml = `<strong>${wb.nameRu || wb.name}</strong><br/>${wb.region}${wb.description ? `<br/><small>${wb.description.replace(/</g, '&lt;')}</small>` : ''}<br/><button class="${styles.popupBtn}" data-wb-id="${wb.id}">Построить маршрут сюда</button><br/><a href="/water/${wb.id}" class="${styles.popupLink}" data-water-link="${wb.id}">Полная информация о водоёме</a>`;
+            const color = turbidityColor(wb.tripHint?.turbidity);
+            const popupHtml = `<strong>${wb.nameRu || wb.name}</strong><br/>${wb.region}${wb.tripHint?.hasWinteringPit ? '<br/><b>Есть зимовальные ямы</b>' : ''}<br/><button class="${styles.popupBtn}" data-wb-id="${wb.id}">Сводка и маршрут</button><br/><a href="/water/${wb.id}" class="${styles.popupLink}" data-water-link="${wb.id}">Полная информация о водоёме</a>`;
 
             if (geom && (geom.type === 'Polygon' || geom.type === 'MultiPolygon' || geom.type === 'LineString')) {
               if (geom.type === 'Polygon') {
@@ -378,8 +478,8 @@ export default function MapPage() {
                     <Polygon
                       key={wb.id}
                       positions={positions as [number, number][] | [number, number][][]}
-                      pathOptions={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
-                      eventHandlers={{ click: () => buildRoute(wb) }}
+                      pathOptions={{ color, fillColor: color, fillOpacity: 0.35, weight: 2 }}
+                      eventHandlers={{ click: () => setVerdictWater(wb) }}
                     >
                       <Popup offset={[70, -20]}>
                         <strong>{wb.nameRu || wb.name}</strong>
@@ -413,13 +513,13 @@ export default function MapPage() {
                 <GeoJSON
                   key={wb.id}
                   data={geojsonData}
-                  style={{ color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.3, weight: 2 }}
+                  style={{ color, fillColor: color, fillOpacity: 0.35, weight: 2 }}
                   onEachFeature={(_, layer) => {
                     layer.bindPopup(popupHtml, { offset: [70, -20] });
-                    layer.on('click', () => buildRoute(wb));
+                    layer.on('click', () => setVerdictWater(wb));
                     layer.on('popupopen', () => {
                       const el = layer.getPopup()?.getElement();
-                      el?.querySelector(`[data-wb-id="${wb.id}"]`)?.addEventListener('click', () => buildRoute(wb));
+                      el?.querySelector(`[data-wb-id="${wb.id}"]`)?.addEventListener('click', () => setVerdictWater(wb));
                       el?.querySelector(`[data-water-link="${wb.id}"]`)?.addEventListener('click', (e: Event) => {
                         e.preventDefault();
                         navigate(`/water/${wb.id}`);
@@ -436,7 +536,7 @@ export default function MapPage() {
                 key={wb.id}
                 position={center}
                 icon={waterIcon}
-                eventHandlers={{ click: () => buildRoute(wb) }}
+                eventHandlers={{ click: () => setVerdictWater(wb) }}
               >
                 <Popup offset={[0, -35]}>
                   <strong>{wb.nameRu || wb.name}</strong>
@@ -453,6 +553,81 @@ export default function MapPage() {
                   </Link>
                 </Popup>
               </Marker>
+            );
+          })}
+          {showPits && pits.map((pit) => {
+            const geom = pit.geometry ? (() => { try { return JSON.parse(pit.geometry!); } catch { return null; } })() : null;
+            const uncertain = pit.boundaryAccuracy !== 'exact';
+            const pitPopup = (
+              <Popup>
+                <strong>{pit.name}</strong>
+                <br />
+                Охота запрещена. {pit.isYearRound ? 'Круглый год.' : `${pit.banFrom || 'начало не указано'} — ${pit.banTo || 'конец не указан'}.`}
+                <br />
+                {uncertain ? 'Границы уточняются.' : 'Границы указаны как точные, всё равно сверьте источник.'}
+                {pit.sourceTitle && <><br />Источник: {pit.sourceTitle}</>}
+                <br />
+                <small>{DISCLAIMER}</small>
+              </Popup>
+            );
+            if (geom?.type === 'Polygon') {
+              const positions = toLeafletPolygon(geom);
+              if (positions) {
+                return (
+                  <Polygon
+                    key={`pit-${pit.id}`}
+                    positions={positions}
+                    pathOptions={{
+                      color: '#9b1c1c',
+                      weight: 2,
+                      fillColor: '#9b1c1c',
+                      fillOpacity: 0.35,
+                      dashArray: uncertain ? '6 4' : undefined,
+                    }}
+                  >
+                    {pitPopup}
+                  </Polygon>
+                );
+              }
+            }
+            if (geom?.type === 'Point' && Array.isArray(geom.coordinates)) {
+              const [lng, lat] = geom.coordinates as number[];
+              const radius = Number(pit.radiusM);
+              if (Number.isFinite(lat) && Number.isFinite(lng) && Number.isFinite(radius) && radius > 0) {
+                return (
+                  <Circle
+                    key={`pit-${pit.id}`}
+                    center={[lat, lng]}
+                    radius={radius}
+                    pathOptions={{ color: '#9b1c1c', fillColor: '#9b1c1c', fillOpacity: 0.35, dashArray: uncertain ? '6 4' : undefined }}
+                  >
+                    {pitPopup}
+                  </Circle>
+                );
+              }
+              if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                return (
+                  <Marker key={`pit-${pit.id}`} position={[lat, lng]} icon={pitIcon}>
+                    {pitPopup}
+                  </Marker>
+                );
+              }
+            }
+            return null;
+          })}
+          {showReports && visibleWaters.filter((wb) => wb.tripHint?.latestVisibilityM != null).map((wb) => {
+            const lat = parseFloat(wb.lat);
+            const lng = parseFloat(wb.lng);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+            return (
+              <CircleMarker
+                key={`report-${wb.id}`}
+                center={[lat, lng]}
+                radius={7}
+                pathOptions={{ color: '#0f766e', fillColor: '#14b8a6', fillOpacity: 0.9 }}
+              >
+                <Popup>Свежая видимость: {wb.tripHint?.latestVisibilityM} м. Это отчёт, не официальный замер.</Popup>
+              </CircleMarker>
             );
           })}
           {userPos && isValidCoord(userPos[0]) && isValidCoord(userPos[1]) && (

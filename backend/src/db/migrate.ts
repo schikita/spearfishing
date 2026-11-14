@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import { mkdirSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { applySqliteTripSchema } from './trip-ddl.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '../../data');
@@ -74,6 +75,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_water_bodies_region ON water_bodies(region);
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 `);
+
+applySqliteTripSchema(db);
 
 db.close();
 console.log('Migrations applied.');

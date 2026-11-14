@@ -340,6 +340,35 @@
   max-height: 80%;
 }
 
+.mapDisclaimer {
+  position: absolute;
+  z-index: 500;
+  left: 8px;
+  right: 56px;
+  top: 8px;
+  padding: 0.45rem 0.6rem;
+  background: rgba(22, 27, 34, 0.92);
+  border: 1px solid rgba(202, 138, 4, 0.55);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.verdictDock {
+  position: absolute;
+  z-index: 650;
+  top: 78px;
+  left: 8px;
+  bottom: 8px;
+  width: min(380px, calc(100% - 16px));
+  overflow: auto;
+  background: rgba(22, 27, 34, 0.97);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
 .mapWrap {
   flex: 1;
   border-radius: var(--radius);

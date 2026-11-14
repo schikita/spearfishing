@@ -73,3 +73,18 @@
   color: var(--danger);
   margin-bottom: 1rem;
 }
+
+.disclaimer {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: rgba(202, 138, 4, 0.12);
+  border: 1px solid rgba(202, 138, 4, 0.45);
+}
+
+.dateLabel {
+  display: block;
+  margin-bottom: 1rem;
+}

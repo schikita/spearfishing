@@ -42,8 +42,35 @@ export const api = {
       }),
     me: () => request<{ user: { id: number; email: string; role: string; hasAccess?: boolean } }>('/auth/me'),
   },
-  waterBodies: () => request<WaterBody[]>('/water-bodies'),
+  waterBodies: (date?: string) =>
+    request<{ disclaimer: string; date: string; waterBodies: WaterBody[] }>(
+      `/water-bodies${date ? `?date=${encodeURIComponent(date)}` : ''}`
+    ),
   waterBodyById: (id: number) => request<WaterBody>(`/water-bodies/${id}`),
+  verdict: (id: number, date: string, lat?: number, lng?: number) => {
+    const q = new URLSearchParams({ date });
+    if (lat != null && lng != null) {
+      q.set('lat', String(lat));
+      q.set('lng', String(lng));
+    }
+    return request<WaterVerdict>(`/water-bodies/${id}/verdict?${q.toString()}`);
+  },
+  winteringPits: (date?: string) =>
+    request<{ disclaimer: string; date: string; pits: WinteringPit[] }>(
+      `/wintering-pits${date ? `?date=${encodeURIComponent(date)}` : ''}`
+    ),
+  pitCheck: (lat: number, lng: number, date: string) =>
+    request<PitCheckResult>('/geo/wintering-pit-check', {
+      method: 'POST',
+      body: JSON.stringify({ lat, lng, date }),
+    }),
+  visibilityReport: (id: number, body: { observedOn: string; visibilityM: number; waterColor?: string; note?: string }) =>
+    request<{ id: number; status: string; message: string }>(`/water-bodies/${id}/visibility-reports`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  correction: (body: { waterBodyId?: number; suggestionType: string; message: string; contact?: string }) =>
+    request<{ id: number; status: string }>('/corrections', { method: 'POST', body: JSON.stringify(body) }),
   blog: () => request<BlogPost[]>('/blog'),
   blogBySlug: (slug: string) => request<BlogPost>(`/blog/${slug}`),
   subscription: {
@@ -85,6 +112,21 @@ export const api = {
       request<{ ok: boolean }>(`/admin/water-bodies/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     deleteWaterBody: (id: number) =>
       request<{ ok: boolean }>(`/admin/water-bodies/${id}`, { method: 'DELETE' }),
+    winteringPits: () => request<WinteringPit[]>('/admin/wintering-pits'),
+    createWinteringPit: (body: Partial<WinteringPit> & { lat?: string; lng?: string }) =>
+      request<{ id: number }>('/admin/wintering-pits', { method: 'POST', body: JSON.stringify(body) }),
+    updateWinteringPit: (id: number, body: Partial<WinteringPit> & { lat?: string; lng?: string }) =>
+      request<{ ok: boolean }>(`/admin/wintering-pits/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    deleteWinteringPit: (id: number) =>
+      request<{ ok: boolean }>(`/admin/wintering-pits/${id}`, { method: 'DELETE' }),
+    importWinteringPits: (geojson: unknown) =>
+      request<{ created: number }>('/admin/wintering-pits/import', { method: 'POST', body: JSON.stringify({ geojson }) }),
+    visibilityReports: () => request<VisibilityReport[]>('/admin/visibility-reports'),
+    moderateReport: (id: number, status: string) =>
+      request<{ ok: boolean }>(`/admin/visibility-reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    corrections: () => request<CorrectionSuggestion[]>('/admin/corrections'),
+    moderateCorrection: (id: number, status: string) =>
+      request<{ ok: boolean }>(`/admin/corrections/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
     reference: () => request<ReferenceSection[]>('/admin/reference'),
     createReference: (body: { slug: string; title: string; titleRu?: string; content: string; orderIndex?: number }) =>
       request<{ id: number }>('/admin/reference', { method: 'POST', body: JSON.stringify(body) }),
@@ -178,6 +220,16 @@ export const api = {
   },
 };
 
+export interface TripHint {
+  weather: 'ok' | 'stale' | 'missing';
+  turbidity: 'low' | 'medium' | 'high' | 'missing';
+  bloom: 'low' | 'medium' | 'high' | 'missing';
+  road: 'ok' | 'risky' | 'only_4x4' | 'likely_closed' | 'unknown';
+  hasWinteringPit: boolean;
+  verificationStatus: string;
+  latestVisibilityM: number | null;
+}
+
 export interface WaterBody {
   id: number;
   name: string;
@@ -186,10 +238,123 @@ export interface WaterBody {
   description: string | null;
   lat: string;
   lng: string;
-  geometry?: string | null; // GeoJSON: Polygon, LineString или Point
+  geometry?: string | null;
   permitInfo: string | null;
   orderIndex: number | null;
   createdAt?: string;
+  bodyType?: string;
+  district?: string | null;
+  locationDescription?: string | null;
+  roadClass?: string;
+  roadNote?: string | null;
+  baselineVisibilityM?: string | null;
+  countryCode?: string;
+  tripHint?: TripHint;
+  disclaimer?: string;
+}
+
+export interface WinteringPit {
+  id: number;
+  waterBodyId: number | null;
+  name: string;
+  region: string | null;
+  waterBodyNameRaw: string | null;
+  geometry: string | null;
+  radiusM: string | null;
+  boundaryAccuracy: string;
+  banFrom: string | null;
+  banTo: string | null;
+  isYearRound: number;
+  sourceTitle: string | null;
+  sourceUrl: string | null;
+  sourceDate: string | null;
+  status: string;
+  notes: string | null;
+  lat?: string;
+  lng?: string;
+}
+
+export interface PitHit {
+  id: number;
+  name: string;
+  boundaryAccuracy: string;
+  boundariesUncertain: boolean;
+  banPeriod: string;
+  sourceTitle: string | null;
+  sourceUrl: string | null;
+  sourceDate: string | null;
+  notes: string | null;
+  contourMissing: boolean;
+}
+
+export interface WaterVerdict {
+  disclaimer: string;
+  date: string;
+  waterBody: { id: number; name: string; region: string; bodyType: string; geometryAccuracy: string };
+  onOfficialList: {
+    listed: boolean;
+    documentTitle: string | null;
+    documentRef: string | null;
+    documentDate: string | null;
+    excerpt: string | null;
+    geometryAccuracy: string;
+    note: string;
+  };
+  permit: { required: boolean | null; organization: { name: string; url: string | null } | null; note: string };
+  winteringPits: {
+    recorded: boolean;
+    message: string;
+    items: PitHit[];
+    userPoint: { inside: PitHit[]; nearby: PitHit[]; boundariesUncertain: boolean } | null;
+  };
+  verification: { status: string; label: string; unofficial: boolean; sourceUrl: string | null; note: string };
+  risks: {
+    weather: 'ok' | 'stale' | 'missing';
+    turbidity: { score: number | null; level: string; label: string };
+    bloom: { score: number | null; level: string; label: string };
+    road: { status: string; label: string; note: string | null };
+    diving: {
+      windSpeedMs: number | null;
+      windDirDeg: number | null;
+      pressureHpa: number | null;
+      airTempC: number | null;
+      waterTempC: number | null;
+      waterTempNote: string;
+    };
+  };
+  reports: { id: number; observedOn: string; visibilityM: number; waterColor: string | null; note: string | null; affectsMap: boolean }[];
+  checklist: { id: string; text: string }[];
+}
+
+export interface PitCheckResult {
+  disclaimer: string;
+  date: string;
+  inside: PitHit[];
+  nearby: PitHit[];
+  boundariesUncertain: boolean;
+}
+
+export interface VisibilityReport {
+  id: number;
+  waterBodyId: number;
+  userId: number;
+  observedOn: string;
+  visibilityM: string;
+  waterColor: string | null;
+  note: string | null;
+  status: string;
+  outlier: number;
+  createdAt: string;
+}
+
+export interface CorrectionSuggestion {
+  id: number;
+  waterBodyId: number | null;
+  suggestionType: string;
+  message: string;
+  contact: string | null;
+  status: string;
+  createdAt: string;
 }
 
 export interface ReferenceSection {

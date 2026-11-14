@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { initDb } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import publicRoutes from './routes/public.js';
+import tripRoutes from './routes/trip.js';
 import adminRoutes from './routes/admin.js';
 import subscriptionRoutes from './routes/subscription.js';
 import settingsRoutes from './routes/settings.js';
@@ -18,6 +19,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api', tripRoutes);
 app.use('/api', publicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subscription', subscriptionRoutes);

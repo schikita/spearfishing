@@ -4,8 +4,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { db, users, waterBodies, referenceSections, permitOrganizations, pageSettings, blogPosts } from '../db/index.js';
-import { eq, asc } from 'drizzle-orm';
+import { db, users, waterBodies, referenceSections, permitOrganizations, pageSettings, blogPosts, winteringPits, visibilityReports, correctionSuggestions } from '../db/index.js';
+import { eq, asc, desc } from 'drizzle-orm';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { getAuthBgUrl, getLogoUrl, getFaviconUrl, getPageBgUrl } from './settings.js';
 
@@ -118,12 +118,26 @@ router.get('/water-bodies', async (_req, res) => {
   res.json(list);
 });
 
+const BODY_TYPES = new Set(['lake', 'reservoir', 'river', 'quarry', 'pond', 'unknown']);
+const ROAD_CLASSES = new Set(['paved', 'gravel', 'track', 'field', 'unknown']);
+
+function waterExtras(body: Record<string, unknown>, updates: Record<string, unknown>) {
+  if (body.bodyType !== undefined && BODY_TYPES.has(String(body.bodyType))) updates.bodyType = String(body.bodyType);
+  if (body.district !== undefined) updates.district = body.district ? String(body.district) : null;
+  if (body.locationDescription !== undefined) updates.locationDescription = body.locationDescription ? String(body.locationDescription) : null;
+  if (body.roadClass !== undefined && ROAD_CLASSES.has(String(body.roadClass))) updates.roadClass = String(body.roadClass);
+  if (body.roadNote !== undefined) updates.roadNote = body.roadNote ? String(body.roadNote) : null;
+  if (body.baselineVisibilityM !== undefined) updates.baselineVisibilityM = body.baselineVisibilityM ? String(body.baselineVisibilityM) : null;
+  if (body.countryCode !== undefined) updates.countryCode = body.countryCode ? String(body.countryCode).slice(0, 2).toUpperCase() : 'BY';
+  if (body.geometry !== undefined) updates.geometry = body.geometry ? JSON.stringify(typeof body.geometry === 'string' ? JSON.parse(String(body.geometry)) : body.geometry) : null;
+}
+
 router.post('/water-bodies', async (req, res) => {
   const { name, nameRu, region, description, lat, lng, permitInfo, orderIndex } = req.body;
   if (!name || !region || lat == null || lng == null) {
     return res.status(400).json({ error: 'Обязательны: name, region, lat, lng' });
   }
-  const [row] = await db.insert(waterBodies).values({
+  const values: Record<string, unknown> = {
     name: String(name),
     nameRu: nameRu ? String(nameRu) : null,
     region: String(region),
@@ -132,7 +146,13 @@ router.post('/water-bodies', async (req, res) => {
     lng: String(lng),
     permitInfo: permitInfo ? String(permitInfo) : null,
     orderIndex: orderIndex != null ? Number(orderIndex) : 0,
-  }).returning({ id: waterBodies.id });
+  };
+  try {
+    waterExtras(req.body, values);
+  } catch {
+    return res.status(400).json({ error: 'Геометрия должна быть JSON' });
+  }
+  const [row] = await db.insert(waterBodies).values(values as never).returning({ id: waterBodies.id });
   res.status(201).json(row);
 });
 
@@ -148,6 +168,11 @@ router.patch('/water-bodies/:id', async (req, res) => {
   if (lng !== undefined) updates.lng = String(lng);
   if (permitInfo !== undefined) updates.permitInfo = permitInfo ? String(permitInfo) : null;
   if (orderIndex !== undefined) updates.orderIndex = Number(orderIndex);
+  try {
+    waterExtras(req.body, updates);
+  } catch {
+    return res.status(400).json({ error: 'Геометрия должна быть JSON' });
+  }
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Нет данных' });
   await db.update(waterBodies).set(updates).where(eq(waterBodies.id, id));
   res.json({ ok: true });
@@ -411,6 +436,158 @@ router.patch('/settings/page-info/:pageKey', async (req, res) => {
   } else {
     await db.insert(pageSettings).values({ pageKey, ...updates });
   }
+  res.json({ ok: true });
+});
+
+const PIT_ACCURACY = new Set(['exact', 'approximate', 'radius', 'unknown']);
+const PIT_STATUS = new Set(['active', 'inactive', 'needs_review']);
+
+function pitValues(body: Record<string, unknown>): Record<string, unknown> {
+  const lat = Number(body.lat);
+  const lng = Number(body.lng);
+  const hasPoint = String(body.lat ?? '').trim() !== '' && String(body.lng ?? '').trim() !== '' && Number.isFinite(lat) && Number.isFinite(lng);
+  const geometry = body.geometry
+    ? JSON.stringify(typeof body.geometry === 'string' ? JSON.parse(String(body.geometry)) : body.geometry)
+    : hasPoint
+      ? JSON.stringify({ type: 'Point', coordinates: [lng, lat] })
+      : null;
+  return {
+    waterBodyId: body.waterBodyId != null && body.waterBodyId !== '' ? Number(body.waterBodyId) : null,
+    name: String(body.name || '').trim(),
+    region: body.region ? String(body.region) : null,
+    waterBodyNameRaw: body.waterBodyNameRaw ? String(body.waterBodyNameRaw) : null,
+    geometry,
+    radiusM: body.radiusM != null && body.radiusM !== '' ? String(body.radiusM) : null,
+    boundaryAccuracy: PIT_ACCURACY.has(String(body.boundaryAccuracy)) ? String(body.boundaryAccuracy) : 'unknown',
+    banFrom: body.banFrom ? String(body.banFrom) : null,
+    banTo: body.banTo ? String(body.banTo) : null,
+    isYearRound: body.isYearRound === false || body.isYearRound === 0 ? 0 : 1,
+    sourceTitle: body.sourceTitle ? String(body.sourceTitle) : null,
+    sourceUrl: body.sourceUrl ? String(body.sourceUrl) : null,
+    sourceDate: body.sourceDate ? String(body.sourceDate) : null,
+    status: PIT_STATUS.has(String(body.status)) ? String(body.status) : 'needs_review',
+    notes: body.notes ? String(body.notes) : null,
+  };
+}
+
+router.get('/wintering-pits', async (_req, res) => {
+  const list = await db.select().from(winteringPits).orderBy(desc(winteringPits.id));
+  res.json(list);
+});
+
+router.post('/wintering-pits/import', async (req, res) => {
+  const features = req.body?.geojson?.features ?? req.body?.features;
+  if (!Array.isArray(features)) return res.status(400).json({ error: 'Ожидается GeoJSON с полем features' });
+  let created = 0;
+  for (const feature of features) {
+    const props = feature?.properties ?? {};
+    const name = String(props.name || props.title || '').trim();
+    if (!name) continue;
+    const geometry = feature.geometry ? JSON.stringify(feature.geometry) : null;
+    await db.insert(winteringPits).values({
+      waterBodyId: props.waterBodyId != null ? Number(props.waterBodyId) : null,
+      name,
+      region: props.region ? String(props.region) : null,
+      waterBodyNameRaw: props.waterBodyName || props.waterBodyNameRaw ? String(props.waterBodyName || props.waterBodyNameRaw) : null,
+      geometry,
+      radiusM: props.radiusM != null ? String(props.radiusM) : null,
+      boundaryAccuracy: PIT_ACCURACY.has(String(props.boundaryAccuracy)) ? String(props.boundaryAccuracy) : geometry ? 'approximate' : 'unknown',
+      banFrom: props.banFrom ? String(props.banFrom) : null,
+      banTo: props.banTo ? String(props.banTo) : null,
+      isYearRound: props.isYearRound === false || props.isYearRound === 0 ? 0 : 1,
+      sourceTitle: props.sourceTitle ? String(props.sourceTitle) : null,
+      sourceUrl: props.sourceUrl ? String(props.sourceUrl) : null,
+      sourceDate: props.sourceDate ? String(props.sourceDate) : null,
+      status: PIT_STATUS.has(String(props.status)) ? String(props.status) : 'needs_review',
+      notes: props.notes
+        ? String(props.notes)
+        : String(props.boundaryAccuracy) === 'exact'
+          ? null
+          : 'Границы уточняются.',
+      createdAt: new Date().toISOString(),
+    });
+    created += 1;
+  }
+  res.status(201).json({ created });
+});
+
+router.post('/wintering-pits', async (req, res) => {
+  let values: Record<string, unknown>;
+  try {
+    values = pitValues(req.body ?? {});
+  } catch {
+    return res.status(400).json({ error: 'Геометрия должна быть JSON' });
+  }
+  if (!values.name) return res.status(400).json({ error: 'Нужно название ямы' });
+  const [row] = await db.insert(winteringPits).values({ ...values, createdAt: new Date().toISOString() } as never).returning({ id: winteringPits.id });
+  res.status(201).json(row);
+});
+
+router.patch('/wintering-pits/:id', async (req, res) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const updates: Record<string, unknown> = {};
+  if (body.name !== undefined) updates.name = String(body.name).trim();
+  if (body.region !== undefined) updates.region = body.region ? String(body.region) : null;
+  if (body.waterBodyId !== undefined) updates.waterBodyId = body.waterBodyId === '' || body.waterBodyId == null ? null : Number(body.waterBodyId);
+  if (body.waterBodyNameRaw !== undefined) updates.waterBodyNameRaw = body.waterBodyNameRaw ? String(body.waterBodyNameRaw) : null;
+  if (body.radiusM !== undefined) updates.radiusM = body.radiusM === '' || body.radiusM == null ? null : String(body.radiusM);
+  if (body.boundaryAccuracy !== undefined && PIT_ACCURACY.has(String(body.boundaryAccuracy))) updates.boundaryAccuracy = String(body.boundaryAccuracy);
+  if (body.banFrom !== undefined) updates.banFrom = body.banFrom ? String(body.banFrom) : null;
+  if (body.banTo !== undefined) updates.banTo = body.banTo ? String(body.banTo) : null;
+  if (body.isYearRound !== undefined) updates.isYearRound = body.isYearRound === false || body.isYearRound === 0 ? 0 : 1;
+  if (body.sourceTitle !== undefined) updates.sourceTitle = body.sourceTitle ? String(body.sourceTitle) : null;
+  if (body.sourceUrl !== undefined) updates.sourceUrl = body.sourceUrl ? String(body.sourceUrl) : null;
+  if (body.sourceDate !== undefined) updates.sourceDate = body.sourceDate ? String(body.sourceDate) : null;
+  if (body.status !== undefined && PIT_STATUS.has(String(body.status))) updates.status = String(body.status);
+  if (body.notes !== undefined) updates.notes = body.notes ? String(body.notes) : null;
+  if (body.geometry !== undefined || (body.lat != null && body.lng != null)) {
+    try {
+      updates.geometry = pitValues(body).geometry;
+    } catch {
+      return res.status(400).json({ error: 'Геометрия должна быть JSON' });
+    }
+  }
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Нет данных' });
+  await db.update(winteringPits).set(updates).where(eq(winteringPits.id, Number(req.params.id)));
+  res.json({ ok: true });
+});
+
+router.delete('/wintering-pits/:id', async (req, res) => {
+  await db.delete(winteringPits).where(eq(winteringPits.id, Number(req.params.id)));
+  res.json({ ok: true });
+});
+
+router.get('/visibility-reports', async (req, res) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : '';
+  const rows = status
+    ? await db.select().from(visibilityReports).where(eq(visibilityReports.status, status)).orderBy(desc(visibilityReports.createdAt))
+    : await db.select().from(visibilityReports).orderBy(desc(visibilityReports.createdAt));
+  res.json(rows);
+});
+
+router.patch('/visibility-reports/:id', async (req, res) => {
+  const status = String(req.body?.status || '');
+  if (!['pending', 'approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: 'Статус: pending, approved или rejected' });
+  }
+  await db.update(visibilityReports).set({ status }).where(eq(visibilityReports.id, Number(req.params.id)));
+  res.json({ ok: true });
+});
+
+router.get('/corrections', async (req, res) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : '';
+  const rows = status
+    ? await db.select().from(correctionSuggestions).where(eq(correctionSuggestions.status, status)).orderBy(desc(correctionSuggestions.createdAt))
+    : await db.select().from(correctionSuggestions).orderBy(desc(correctionSuggestions.createdAt));
+  res.json(rows);
+});
+
+router.patch('/corrections/:id', async (req, res) => {
+  const status = String(req.body?.status || '');
+  if (!['new', 'accepted', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: 'Статус: new, accepted или rejected' });
+  }
+  await db.update(correctionSuggestions).set({ status }).where(eq(correctionSuggestions.id, Number(req.params.id)));
   res.json({ ok: true });
 });
 

@@ -190,7 +190,7 @@ async function mapHubBodyHtml(): Promise<string> {
   const regionsHtml = [...byRegion.entries()]
     .map(([region, list]) => {
       const items = list
-        .map((w) => {
+        .map((w: { id: number; name: string; nameRu: string | null }) => {
           const name = w.nameRu || w.name;
           return `<li><a href="/water/${w.id}">${escapeHtml(name)}</a></li>`;
         })
@@ -233,7 +233,7 @@ async function referenceIndexBodyHtml(): Promise<string> {
     .from(referenceSections)
     .orderBy(asc(referenceSections.orderIndex));
   const items = sections
-    .map((s) => `<li><a href="/reference/${escapeHtml(s.slug)}">${escapeHtml(s.titleRu || s.title)}</a></li>`)
+    .map((s: { slug: string; title: string; titleRu: string | null }) => `<li><a href="/reference/${escapeHtml(s.slug)}">${escapeHtml(s.titleRu || s.title)}</a></li>`)
     .join('');
   return `<article><h1>Справочник подводной охоты</h1><ul>${items}</ul><p><a href="/blog">Блог</a> · <a href="/map">Карта</a></p></article>`;
 }

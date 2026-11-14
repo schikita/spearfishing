@@ -4,6 +4,9 @@ import { api, WaterBody } from '../api/client';
 import PageWithBg from '../components/PageWithBg';
 import SeoHead from '../components/SeoHead';
 import Breadcrumbs from '../components/Breadcrumbs';
+import VerdictPanel from '../components/VerdictPanel';
+import { DISCLAIMER } from '../disclaimer';
+import { nextWeekendISO } from '../tripDate';
 import { breadcrumbList } from '../seo/jsonLd';
 import styles from './WaterBodyPage.module.css';
 
@@ -12,6 +15,7 @@ export default function WaterBodyPage() {
   const [wb, setWb] = useState<WaterBody | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tripDate, setTripDate] = useState(nextWeekendISO);
 
   useEffect(() => {
     const numId = Number(id);
@@ -76,6 +80,12 @@ export default function WaterBodyPage() {
         <Link to="/map" className={styles.backLink}>← На карту</Link>
         <h1>{name}</h1>
         <p className={styles.region}>{wb.region}</p>
+        <p className={styles.disclaimer}>{wb.disclaimer || DISCLAIMER}</p>
+        <label className={styles.dateLabel}>
+          Дата выезда{' '}
+          <input type="date" value={tripDate} onChange={(e) => setTripDate(e.target.value)} />
+        </label>
+        <VerdictPanel waterBodyId={wb.id} date={tripDate} />
         {wb.description && (
           <div className={styles.section}>
             <h2>Описание</h2>

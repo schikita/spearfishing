@@ -4,6 +4,7 @@ import { mkdirSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { BLOG_ARTICLES } from './blog-articles.js';
+import { applySqliteTripSchema } from './trip-ddl.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '../../data');
@@ -128,6 +129,7 @@ export function initDb(): void {
     UPDATE page_settings SET phone = '+375295450978', email = 'spearfishing125@gmail.com'
     WHERE page_key = 'info' AND (phone IS NULL OR phone = '');
   `);
+  applySqliteTripSchema(db);
 
   const adminCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
   if (adminCount.c === 0) {
